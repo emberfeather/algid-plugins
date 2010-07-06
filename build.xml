@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+<project name="algid-plugins" default="minify" basedir=".">
+	<!-- Include the property files -->
+	<property file="${basedir}/build/settings/user.properties"/>
+	<property file="${basedir}/build/settings/project.properties"/>
+	<property file="${basedir}/build/settings/version.properties"/>
+	<property file="${basedir}/build/settings/build.properties"/>
+	<property file="${basedir}/build/settings/test.properties"/>
+	
+	<target name="minify" depends="prepare" description="Minify the CSS and JS files">
+		<echo message="Starting: CSS and JS minification"/>
+
+		<!-- Create a single, concatenated JS file
+		<concat destfile="${build.script}jquery.${project.key}.js">
+			<fileset dir="${build.script}" includes="jquery.base.js" />
+		</concat> -->
+		
+		<!-- Create a single, concatenated CSS file
+		<concat destfile="${build.style}${project.key}.css">
+			<fileset dir="${build.style}" includes="base.css" />
+		</concat> -->
+		
+		<!-- Compress the JS files with Google Closure Compiler -->
+		<apply executable="java" parallel="false" dest="${basedir}/${project.key}">
+			<fileset dir="${basedir}${file.separator}${project.key}" includes="**/*.js" excludes="**/*-min.js" />
+			<arg line="-jar"/>
+			<arg path="${build.lib}${file.separator}${build.lib.jar.compiler}" />
+			<arg line="--js"/>
+			<srcfile/>
+			<arg line="--js_output_file"/>
+			<mapper type="glob" from="*.js" to="*-min.js"/>
+			<targetfile/>
+		</apply>
+		
+		<!-- Compress the CSS files with Yahoo UI Compressor -->
+		<apply executable="java" parallel="false" dest="${basedir}/${project.key}">
+			<fileset dir="${basedir}${file.separator}${project.key}" includes="**/*.css" excludes="**/*-min.css" />
+			<arg line="-jar"/>
+			<arg path="${build.lib}${file.separator}${build.lib.jar.compressor}" />
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.css" to="*-min.css"/>
+			<targetfile/>
+		</apply>
+		
+		<echo message="Finished: CSS and JS minification"/>
+	</target>
+	
+	<target name="prepare">
+		<echo message="Starting: Environment Preparation"/>
+		
+		<!-- Make the distribution directory -->
+		<mkdir dir="${build.dist}" />
+		
+		<!-- Make the log directory -->
+		<mkdir dir="${build.logs}" />
+		
+		<!-- Make the unit test directory -->
+		<mkdir dir="${build.dist}/unit" />
+		
+		<!-- Define log file -->
+		<record name="${build.logs}${file.separator}${build.logs.ant}" />
+		
+		<!-- Create the time stamp -->
+		<tstamp>
+			<format property="build.date" pattern="MM/dd/yy hh:mmaa"/>
+		</tstamp>
+		
+		<!-- Combine the version parts into full version identifier -->
+		<property name="project.version" value="${project.version.major}.${project.version.minor}.${project.version.build}"/>
+		
+		<!-- Set the script directory -->
+		<property name="build.script" value="${basedir}${file.separator}${project.key}${file.separator}script${file.separator}"/>
+		
+		<!-- Set the style directory -->
+		<property name="build.style" value="${basedir}${file.separator}${project.key}${file.separator}style${file.separator}"/>
+		
+		<echo message="Finished: Environment Preparation"/>
+	</target>
+	
+	<target name="release" depends="prepare,minify,testVarScoper,testMXUnit,releaseTemplate" description="Tags a release">
+		<echo message="Starting: Release of version ${project.version}"/>
+		
+		<!-- Create zip distribution -->
+		<zip destfile="${build.release.source.zip}" basedir="${basedir}${file.separator}${project.key}" update="true" />
+		
+		<!-- Update the build version
+		<propertyfile file="${build.dist}/settings/version.properties" comment="Version properties">
+			<entry key="project.version.build" value="1" operation="+" type="int"/>
+		</propertyfile>
+		-->
+		
+		<echo message="Finished: Release of version ${project.version} complete"/>
+	</target>
+	
+	<target name="releaseTemplate">
+		<echo message="Starting: Release Template"/>
+		
+		<!-- Copy the version file -->
+		<copy tofile="${basedir}/version.json" overwrite="true">
+			<fileset file="${build.templates}/version.json"/>
+			<filterset>
+				<filterset>
+					<filter token="project.releaseNotes" value="${project.wiki}/ReleaseNotes"/>
+					<filter token="project.releaseURL" value="${project.files}/${project.key}-${project.version}.zip"/>
+					<filter token="project.url" value="${project.files}/${project.key}-${project.version}.zip"/>
+					<filter token="project.version" value="${project.version}"/>
+				</filterset>
+			</filterset>
+		</copy>
+		
+		<echo message="Finished: Release Template"/>
+	</target>
+	
+	<target name="testMXUnit" depends="prepare" description="Runs the Unit Tests">
+		<echo message="Starting: Unit Tests"/>
+		
+		<!-- Load ANT tasks -->
+		<taskdef name="mxunittask" classname="org.mxunit.ant.MXUnitAntTask" classpath="${build.lib}${file.separator}${build.lib.jar.mxunit}" />
+		
+		<mxunittask server="${test.host}" port="${test.port}" outputdir="${build.dist}/unit" defaultrunner="${test.mxunit.defaultrunner}" failureproperty="test.mxunit.failure" verbose="${general.verbose}">
+			<directory path="${basedir}/test" componentPath="${test.mxunit.componentpath}" recurse="true" />
+		</mxunittask>
+		
+		<fail if="test.mxunit.failure" message="Unit tests failed" />
+		
+		<echo message="Finished: Unit Tests"/>
+	</target>
+	
+	<target name="testVarScoper" depends="prepare" description="Runs the varScoper">
+		<echo message="Starting: VarScoper Tests"/>
+		
+		<!-- Save the results as a csv -->
+		<get dest="${test.varscoper.resultFile}" src="http://${test.host}:${test.port}${test.varscoper.base}/varScoper.cfm?displayformat=csv&amp;filePath=${test.varscoper.filePath}&amp;recursiveDirectory=${test.varscoper.recurse}"/>
+		
+		<loadfile srcfile="${test.varscoper.resultFile}" property="test.varscoper.csv">
+			<filterchain>
+				<headfilter skip="1"/>
+				
+				<trim/>
+			</filterchain>
+		</loadfile>
+		
+		<!-- Remove the csv file -->
+		<delete file="${test.varscoper.resultFile}"/>
+		
+		<!-- Fail the build if there are any violations of the var scoping -->
+		<fail message="Var Scope Violation:${line.separator}${test.varscoper.csv}">
+			<condition>
+				<isset property="test.varscoper.csv"/>
+			</condition>
+		</fail>
+		
+		<echo message="Finished: VarScoper Tests"/>
+	</target>
+</project>

@@ -1,0 +1,7 @@
+build/export
+build/logs
+build/settings/user.properties
+build/unit
+plugins/config/settings.json.cfm
+plugins/config/version.json.cfm
+dist/
