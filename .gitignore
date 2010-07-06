@@ -1,3 +1,4 @@
+.project
 build/export
 build/logs
 build/settings/user.properties
