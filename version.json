@@ -1,6 +1,6 @@
 {
-	"description": "",
-	"downloadURL": "",
-	"URL": "",
+	"releaseNotes": "http://wiki.github.com/emberfeather/algid-plugins/ReleaseNotes",
+	"releaseURL": "http://github.com/emberfeather/algid-plugins/zipball/0.1.0",
+	"URL": "http://github.com/emberfeather/algid-plugins",
 	"version": "0.1.0"
 }

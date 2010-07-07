@@ -94,7 +94,7 @@
 		<echo message="Finished: Release of version ${project.version} complete"/>
 	</target>
 	
-	<target name="releaseTemplate">
+	<target name="releaseTemplate" depends="prepare">
 		<echo message="Starting: Release Template"/>
 		
 		<!-- Copy the version file -->
@@ -103,8 +103,8 @@
 			<filterset>
 				<filterset>
 					<filter token="project.releaseNotes" value="${project.wiki}/ReleaseNotes"/>
-					<filter token="project.releaseURL" value="${project.files}/${project.key}-${project.version}.zip"/>
-					<filter token="project.url" value="${project.files}/${project.key}-${project.version}.zip"/>
+					<filter token="project.releaseURL" value="${project.files}/${project.version}"/>
+					<filter token="project.url" value="${project.url}"/>
 					<filter token="project.version" value="${project.version}"/>
 				</filterset>
 			</filterset>
