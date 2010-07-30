@@ -5,6 +5,7 @@
 	},
 	"i18n": {
 		"locales": [
+			"en_PI",
 			"en_US"
 		]
 	},
