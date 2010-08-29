@@ -1,6 +1,0 @@
-{
-	"releaseNotes": "@project.releaseNotes@",
-	"releaseURL": "@project.releaseURL@",
-	"URL": "@project.url@",
-	"version": "@project.version@"
-}

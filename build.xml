@@ -79,38 +79,65 @@
 		<echo message="Finished: Environment Preparation"/>
 	</target>
 	
-	<target name="release" depends="prepare,minify,testVarScoper,testMXUnit,releaseTemplate" description="Tags a release">
-		<echo message="Starting: Release of version ${project.version}"/>
+	<target name="release" depends="prepare,minify,testVarScoper,testMXUnit" description="Tags a release">
+		<echo message="Starting: Release of version ${project.version}" />
 		
-		<!-- Create zip distribution -->
-		<zip destfile="${build.release.source.zip}" basedir="${basedir}${file.separator}${project.key}" update="true" />
+		<!-- Start a release branch -->
+		<git command="flow" dir="${basedir}">
+			<args>
+				<arg value="release" />
+				<arg value="start" />
+				<arg value="${project.version}" />
+			</args>
+		</git>
 		
-		<!-- Update the build version
-		<propertyfile file="${build.dist}/settings/version.properties" comment="Version properties">
+		<!-- Update the release version number -->
+		<replaceregexp file="${basedir}/version.json"
+			match="&#34;version&#34;: &#34;[0-9\.]*&#34;"
+			replace="&#34;version&#34;: &#34;${project.version}&#34;"
+			byline="true"/>
+		
+		<!-- Update the download version number -->
+		<replaceregexp file="${basedir}/version.json"
+			match="tarball/[0-9\.]*&#34;"
+			replace="tarball/${project.version}&#34;"
+			byline="true"
+			/>
+		
+		<!-- Finish a release branch -->
+		<git command="commit" dir="${basedir}">
+			<args>
+				<arg value="-a" />
+				<arg value="-m 'Updated version files for release'" />
+			</args>
+		</git>
+		
+		<!-- Finish a release branch -->
+		<git command="flow" dir="${basedir}">
+			<args>
+				<arg value="release" />
+				<arg value="finish" />
+				<arg value="${project.version}" />
+				<arg value="-m 'Tagging version ${project.version}'" />
+			</args>
+		</git>
+		
+		<!-- Update the build version -->
+		<propertyfile file="${build}/settings/version.properties" comment="Version properties">
 			<entry key="project.version.build" value="1" operation="+" type="int"/>
 		</propertyfile>
-		-->
 		
-		<echo message="Finished: Release of version ${project.version} complete"/>
-	</target>
-	
-	<target name="releaseTemplate" depends="prepare">
-		<echo message="Starting: Release Template"/>
+		<antcall target="versionChanged" inheritall="false" inheritrefs="false"></antcall>
 		
-		<!-- Copy the version file -->
-		<copy tofile="${basedir}/version.json" overwrite="true">
-			<fileset file="${build.templates}/version.json"/>
-			<filterset>
-				<filterset>
-					<filter token="project.releaseNotes" value="${project.wiki}/ReleaseNotes"/>
-					<filter token="project.releaseURL" value="${project.files}/${project.version}"/>
-					<filter token="project.url" value="${project.url}"/>
-					<filter token="project.version" value="${project.version}"/>
-				</filterset>
-			</filterset>
-		</copy>
+		<!-- Commit the updated version files -->
+		<git command="commit" dir="${basedir}">
+			<args>
+				<arg value="-a" />
+				<arg value="-m 'Updated version properties for next release'" />
+			</args>
+		</git>
 		
-		<echo message="Finished: Release Template"/>
+		<echo message="Finished: Release of version ${project.version}"/>
 	</target>
 	
 	<target name="testMXUnit" depends="prepare" description="Runs the Unit Tests">
@@ -154,4 +181,65 @@
 		
 		<echo message="Finished: VarScoper Tests"/>
 	</target>
+	
+	<!-- Done in separate call since it required reading in updated property files -->
+	<target name="versionChanged">
+		<echo message="Starting: Version Changed" />
+		
+		<property file="${basedir}/build/settings/project.properties"/>
+		<property file="${basedir}/build/settings/version.properties"/>
+		
+		<!-- Combine the version parts into full version identifier -->
+		<property name="project.version" value="${project.version.major}.${project.version.minor}.${project.version.build}"/>
+		
+		<!-- Update the version number for future development -->
+		<replaceregexp file="${project.key}/config/${project.key}.json.cfm"
+			match="&#34;version&#34;: &#34;[0-9\.]*&#34;"
+			replace="&#34;version&#34;: &#34;${project.version}&#34;"
+			byline="true"/>
+		
+		<echo message="Finished: Version Changed"/>
+	</target>
+	
+	<target name="versionNextMajor" description="Increment the version to the next major point number">
+		<echo message="Starting: Increment To Next Major Point"/>
+		
+		<propertyfile file="${build}/settings/version.properties" comment="Version properties">
+			<entry key="project.version.major" value="1" operation="+" type="int"/>
+			<entry key="project.version.minor" value="0" type="int"/>
+			<entry key="project.version.build" value="0" type="int"/>
+		</propertyfile>
+		
+		<antcall target="versionChanged" inheritall="false" inheritrefs="false"></antcall>
+		
+		<echo message="Finished: Increment To Next Major Point"/>
+	</target>
+	
+	<target name="versionNextMinor" description="Increment the version to the next minor point number">
+		<echo message="Starting: Increment To Next Minor Point"/>
+		
+		<propertyfile file="${build}/settings/version.properties" comment="Version properties">
+			<entry key="project.version.minor" value="1" operation="+" type="int"/>
+			<entry key="project.version.build" value="0" type="int"/>
+		</propertyfile>
+		
+		<antcall target="versionChanged" inheritall="false" inheritrefs="false"></antcall>
+		
+		<echo message="Finished: Increment To Next Minor Point"/>
+	</target>
+	
+	<macrodef name="git">
+		<attribute name="command" />
+		<attribute name="dir" default="" />
+		<element name="args" optional="true" />
+		
+		<sequential>
+			<echo message="git @{command}" />
+			
+			<exec executable="git" dir="@{dir}" failonerror="true">
+				<arg value="@{command}" />
+				<args/>
+			</exec>
+		</sequential>
+	</macrodef>
 </project>
