@@ -9,7 +9,7 @@
 				<add position="action"/>
 				<list position="action"/>
 				<edit position="action"/>
-			</source>s
+			</source>
 		</plugin>
 	</admin>
 </navigation>
