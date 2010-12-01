@@ -5,6 +5,7 @@
 			<install position="action"/>
 			
 			<update position="action">
+				<all position="action"/>
 				<list position="action"/>
 			</update>
 			
