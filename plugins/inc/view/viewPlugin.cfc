@@ -50,17 +50,21 @@
 		<cfset datagrid.addColumn({
 			key = 'plugin',
 			label = 'plugin',
+			link = {
+				'plugin' = 'key',
+				'_base' = '/admin/plugin'
+			}
 		}) />
 		
 		<cfset datagrid.addColumn({
 			key = 'versionCurrent',
-			label = 'versionCurrent',
+			label = 'versionCurrent'
 		}) />
 		
 		<cfif arguments.options.showVersionAvailable>
 			<cfset datagrid.addColumn({
 				key = 'versionAvailable',
-				label = 'versionAvailable',
+				label = 'versionAvailable'
 			}) />
 			
 			<cfset datagrid.addColumn({

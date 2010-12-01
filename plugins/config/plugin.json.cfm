@@ -14,7 +14,7 @@
 	"pluginSources": [
 		{
 			"name": "one20 Plugins",
-			"sourceURL": "http://github.com/emberfeather/one20-plugins/raw/master/plugins.json"
+			"sourceURL": "https://github.com/emberfeather/one20-directory/raw/master/plugins.json"
 		}
 	],
 	"prerequisites": {

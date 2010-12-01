@@ -1,4 +1,42 @@
 <cfcomponent extends="algid.inc.resource.base.service" output="false">
+	<cffunction name="checkVersion" access="private" returntype="struct" output="false">
+		<cfargument name="versionUrl" type="string" required="true" />
+		
+		<cfset var source = '' />
+		<cfset var versionInfo = '' />
+		
+		<cfhttp method="get" url="#arguments.versionUrl#" result="source" />
+		
+		<cfif not isJSON(source.fileContent)>
+			<cfreturn {
+				"releaseNotes": "",
+				"archive": "",
+				"URL": "",
+				"version": "N/A"
+			} />
+		</cfif>
+		
+		<cfreturn deserializeJson(source.fileContent) />
+	</cffunction>
+	
+	<cffunction name="getPluginSites" access="private" returntype="struct" output="false">
+		<cfset var i = '' />
+		<cfset var pluginSites = {} />
+		<cfset var pluginSources = '' />
+		<cfset var source = '' />
+		
+		<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
+		
+		<!--- Retrieve the current update URL for plugins --->
+		<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
+			<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
+			
+			<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
+		</cfloop>
+		
+		<cfreturn pluginSites />
+	</cffunction>
+	
 	<cffunction name="getPlugins" access="public" returntype="query" output="false">
 		<cfargument name="filter" type="struct" default="#{}#" />
 		<cfargument name="options" type="struct" default="#{}#" />
@@ -8,9 +46,12 @@
 		<cfset var i = '' />
 		<cfset var plugin = '' />
 		<cfset var plugins = '' />
+		<cfset var pluginSites = '' />
+		<cfset var pluginUrls = '' />
 		<cfset var randomPrefix = 'p-' & left(createUUID(), 8) & '-' />
 		<cfset var results = '' />
 		<cfset var useThreaded = false />
+		<cfset var version = '' />
 		
 		<cfparam name="arguments.filter.orderBy" default="" />
 		<cfparam name="arguments.filter.search" default="" />
@@ -35,18 +76,32 @@
 		
 		<!--- Check against the update sources to see if there is an update available. --->
 		<cfif arguments.options.checkForUpdates>
+			<cfset pluginSites = getPluginSites() />
+			
 			<cfloop from="1" to="#arrayLen(plugins)#" index="i">
-				<cfset plugin = plugins[i] />
+				<cfif not structKeyExists(pluginSites.plugins, plugins[i])>
+					<cfset querySetCell(results, 'versionAvailable', '—', i ) />
+					
+					<cfcontinue />
+				</cfif>
+				
+				<cfset pluginUrl = pluginSites.plugins[plugins[i]].versionUrl />
 				
 				<cfif useThreaded>
 					<!--- Use a separate thread to read each check --->
-					<cfthread action="run" name="#randomPrefix##i#" plugin="#plugin#" results="#results#" index="#i#">
-						<cfset querySetCell(attributes.results, 'versionAvailable', '1.0.0', attributes.index) />
+					<cfthread action="run" name="#randomPrefix##i#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#">
+						<cfset var version = '' />
+						
+						<cfset version = attributes.checkVersion(attributes.pluginUrl) />
+						
+						<cfset querySetCell(attributes.results, 'versionAvailable', version.version, attributes.index ) />
 					</cfthread>
 					
 					<cfset currThreads = listAppend(currThreads, '#randomPrefix##i#') />
 				<cfelse>
-					<cfset querySetCell(results, 'versionAvailable', '1.0.1', i) />
+					<cfset version = checkVersion(pluginUrl) />
+					
+					<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
 				</cfif>
 			</cfloop>
 			
