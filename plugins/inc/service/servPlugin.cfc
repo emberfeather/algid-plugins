@@ -1,22 +1,30 @@
 <cfcomponent extends="algid.inc.resource.base.service" output="false">
 	<cffunction name="checkVersion" access="private" returntype="struct" output="false">
+		<cfargument name="plugin" type="string" required="true" />
 		<cfargument name="versionUrl" type="string" required="true" />
 		
+		<cfset var currentPlugin = '' />
 		<cfset var source = '' />
-		<cfset var versionInfo = '' />
 		
-		<cfhttp method="get" url="#arguments.versionUrl#" result="source" />
+		<cfset currentPlugin = getPlugin(arguments.plugin) />
 		
-		<cfif not isJSON(source.fileContent)>
-			<cfreturn {
-				"releaseNotes": "",
-				"archive": "",
-				"URL": "",
-				"version": "N/A"
-			} />
+		<cfif not currentPlugin.hasRemoteVersion()>
+			<cfhttp method="get" url="#arguments.versionUrl#" result="source" />
+			
+			<!--- Don't cache it if we didn't find the correct format --->
+			<cfif not isJSON(source.fileContent)>
+				<cfreturn {
+					"releaseNotes": "",
+					"archive": "",
+					"URL": "",
+					"version": "N/A"
+				} />
+			</cfif>
+			
+			<cfset currentPlugin.setRemoteVersion(deserializeJson(source.fileContent)) />
 		</cfif>
 		
-		<cfreturn deserializeJson(source.fileContent) />
+		<cfreturn currentPlugin.getRemoteVersion() />
 	</cffunction>
 	
 	<cffunction name="getPlugin" access="public" returntype="component" output="false">
@@ -53,7 +61,7 @@
 		<cfset results = queryNew('key,plugin,versionCurrent,versionAvailable') />
 		
 		<cfloop from="1" to="#arrayLen(plugins)#" index="i">
-			<cfset plugin = variables.transport.theApplication.managers.plugin.get(plugins[i]) />
+			<cfset plugin = getPlugin(plugins[i]) />
 			
 			<cfset queryAddRow(results) />
 			
@@ -77,17 +85,17 @@
 				
 				<cfif useThreaded>
 					<!--- Use a separate thread to read each check --->
-					<cfthread action="run" name="#randomPrefix##i#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#">
+					<cfthread action="run" name="#randomPrefix##i#" plugin="#plugins[i]#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#">
 						<cfset var version = '' />
 						
-						<cfset version = attributes.checkVersion(attributes.pluginUrl) />
+						<cfset version = attributes.checkVersion(attributes.plugin, attributes.pluginUrl) />
 						
 						<cfset querySetCell(attributes.results, 'versionAvailable', version.version, attributes.index ) />
 					</cfthread>
 					
 					<cfset currThreads = listAppend(currThreads, '#randomPrefix##i#') />
 				<cfelse>
-					<cfset version = checkVersion(pluginUrl) />
+					<cfset version = checkVersion(plugins[i], pluginUrl) />
 					
 					<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
 				</cfif>
@@ -95,7 +103,7 @@
 			
 			<!--- Join the threads so we don't return prematurely --->
 			<cfif useThreaded>
-				<cfthread action="join" name="#currThreads#" timeout="500" />
+				<cfthread action="join" name="#currThreads#" timeout="10000" />
 				
 				<cfloop list="#currThreads#" index="i">
 					<cfif cfthread[i].status eq 'terminated'>
@@ -127,18 +135,27 @@
 	
 	<cffunction name="getPluginSites" access="public" returntype="struct" output="false">
 		<cfset var i = '' />
+		<cfset var plugin = '' />
 		<cfset var pluginSites = {} />
 		<cfset var pluginSources = '' />
 		<cfset var source = '' />
 		
-		<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
+		<cfset plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
-		<!--- Retrieve the current update URL for plugins --->
-		<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
-			<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
+		<cfif not plugin.hasPluginSites()>
+			<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
 			
-			<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
-		</cfloop>
+			<!--- Retrieve the current update URL for plugins --->
+			<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
+				<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
+				
+				<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
+			</cfloop>
+			
+			<cfset plugin.setPluginSites(pluginSites) />
+		<cfelse>
+			<cfset pluginSites = plugin.getPluginSites() />
+		</cfif>
 		
 		<cfreturn pluginSites />
 	</cffunction>
