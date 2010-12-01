@@ -10,6 +10,7 @@
 		]
 	},
 	"key": "plugins",
+	"plugin": "Plugins",
 	"pluginSources": [
 		{
 			"name": "one20 Plugins",
