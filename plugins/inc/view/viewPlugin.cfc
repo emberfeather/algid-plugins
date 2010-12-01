@@ -28,13 +28,6 @@
 		<!--- Search --->
 		<cfset filter.addFilter('search') />
 		
-		<!--- Refresh Caching --->
-		<cfset options = variables.transport.theApplication.factories.transient.getOptions() />
-		
-		<cfset options.addOption('', 'true') />
-		
-		<cfset filter.addFilter('refreshCache', options) />
-		
 		<cfreturn filter.toHTML(variables.transport.theRequest.managers.singleton.getURL(), values) />
 	</cffunction>
 	
