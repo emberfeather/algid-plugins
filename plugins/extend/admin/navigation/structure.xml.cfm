@@ -2,7 +2,9 @@
 	<admin position="main">
 		<plugin position="main">
 			<list position="action"/>
-			<install position="action"/>
+			<install position="action">
+				<list position="action"/>
+			</install>
 			
 			<update position="action">
 				<all position="action"/>

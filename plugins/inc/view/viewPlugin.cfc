@@ -40,6 +40,8 @@
 		<cfset var timeago = '' />
 		
 		<cfparam name="arguments.options.showVersionAvailable" default="false" />
+		<cfparam name="arguments.options.showInstall" default="false" />
+		<cfparam name="arguments.options.showUpdate" default="false" />
 		
 		<cfset arguments.options.theURL = variables.transport.theRequest.managers.singleton.getURL() />
 		<cfset i18n = variables.transport.theApplication.managers.singleton.getI18N() />
@@ -67,7 +69,21 @@
 				key = 'versionAvailable',
 				label = 'versionAvailable'
 			}) />
-			
+		</cfif>
+		
+		<cfif arguments.options.showInstall>
+			<cfset datagrid.addColumn({
+				class = 'phantom align-right',
+				value = [ 'install' ],
+				link = {
+					'plugin' = 'key',
+					'_base' = '/admin/plugin/install'
+				},
+				title = 'plugin'
+			}) />
+		</cfif>
+		
+		<cfif arguments.options.showUpdate>
 			<cfset datagrid.addColumn({
 				class = 'phantom align-right',
 				value = [ 'update' ],

@@ -6,4 +6,4 @@
 
 <cfset paginate = variables.transport.theApplication.factories.transient.getPaginate(plugins.recordcount, session.numPerPage, theURL.searchID('onPage')) />
 
-<cfoutput>#viewMaster.datagrid(transport, plugins, viewPlugin, paginate, filter, { showVersionAvailable: true })#</cfoutput>
+<cfoutput>#viewMaster.datagrid(transport, plugins, viewPlugin, paginate, filter, { showVersionAvailable: true, showUpdate: true })#</cfoutput>

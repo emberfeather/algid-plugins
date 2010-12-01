@@ -6,10 +6,15 @@
 		
 		<cfset var currentPlugin = '' />
 		<cfset var source = '' />
+		<cfset var version = '' />
 		
-		<cfset currentPlugin = getPlugin(arguments.plugin) />
+		<cfif variables.transport.theApplication.managers.plugin.has(arguments.plugin)>
+			<cfset currentPlugin = variables.transport.theApplication.managers.plugin.get(arguments.plugin) />
+			
+			<cfset arguments.refreshCache = arguments.refreshCache or not currentPlugin.hasRemoteVersion() />
+		</cfif>
 		
-		<cfif arguments.refreshCache or not currentPlugin.hasRemoteVersion()>
+		<cfif arguments.refreshCache>
 			<cfhttp method="get" url="#arguments.versionUrl#" result="source" />
 			
 			<!--- Don't cache it if we didn't find the correct format --->
@@ -22,16 +27,33 @@
 				} />
 			</cfif>
 			
-			<cfset currentPlugin.setRemoteVersion(deserializeJson(source.fileContent)) />
+			<cfset version = deserializeJson(source.fileContent) />
+			
+			<cfif isObject(currentPlugin)>
+				<cfset currentPlugin.setRemoteVersion(version) />
+			</cfif>
+		<cfelse>
+			<cfset version = currentPlugin.getRemoteVersion() />
 		</cfif>
 		
-		<cfreturn currentPlugin.getRemoteVersion() />
+		<cfreturn version />
 	</cffunction>
 	
 	<cffunction name="getPlugin" access="public" returntype="component" output="false">
 		<cfargument name="plugin" type="string" required="true" />
 		
-		<cfreturn variables.transport.theApplication.managers.plugin.get(arguments.plugin) />
+		<cfset var tempObj = '' />
+		
+		<cfif variables.transport.theApplication.managers.plugin.has(arguments.plugin)>
+			<cfreturn variables.transport.theApplication.managers.plugin.get(arguments.plugin) />
+		</cfif>
+		
+		<cfset tempObj = variables.transport.theApplication.factories.transient.getPlugin() />
+		
+		<cfset tempObj.setPlugin(arguments.plugin) />
+		<cfset tempObj.setKey(arguments.plugin) />
+		
+		<cfreturn tempObj />
 	</cffunction>
 	
 	<cffunction name="getPlugins" access="public" returntype="query" output="false">
@@ -47,35 +69,66 @@
 		<cfset var pluginUrls = '' />
 		<cfset var randomPrefix = 'p-' & left(createUUID(), 8) & '-' />
 		<cfset var results = '' />
+		<cfset var tempObj = '' />
 		<cfset var useThreaded = false />
 		<cfset var version = '' />
 		
-		<cfparam name="arguments.filter.orderBy" default="" />
-		<cfparam name="arguments.filter.search" default="" />
-		<cfparam name="arguments.options.checkForUpdates" default="false" />
-		<cfparam name="arguments.options.refreshCache" default="false" />
+		<cfset arguments.filter = variables.extend({
+			orderBy: '',
+			search: ''
+		}, arguments.filter) />
+		
+		<cfset arguments.options = variables.extend({
+			checkForUpdates: false,
+			refreshCache: false,
+			showInstalled: true,
+			showNotInstalled: false
+		}, arguments.options) />
 		
 		<cfset app = variables.transport.theApplication.managers.singleton.getApplication() />
+		<cfset tempObj = variables.transport.theApplication.factories.transient.getObject() />
 		
-		<cfset plugins = app.getPlugins() />
 		<cfset useThreaded = app.getUseThreaded() />
+		
+		<cfset pluginSites = getPluginSites(arguments.options.refreshCache) />
+		
+		<!--- Determine which plugins to show --->
+		<cfif arguments.options.showInstalled>
+			<cfset tempObj.addUniquePlugins(argumentCollection = app.getPlugins()) />
+		</cfif>
+		
+		<cfif arguments.options.showNotInstalled>
+			<cfset plugins = app.getPlugins() />
+			
+			<cfloop list="#structKeyList(pluginSites.plugins)#" index="i">
+				<cfif not arrayFind(plugins, i)>
+					<cfset tempObj.addUniquePlugins(i) />
+				</cfif>
+			</cfloop>
+		</cfif>
+		
+		<cfset plugins = tempObj.getPlugins() />
 		
 		<cfset results = queryNew('key,plugin,versionCurrent,versionAvailable') />
 		
 		<cfloop from="1" to="#arrayLen(plugins)#" index="i">
-			<cfset plugin = getPlugin(plugins[i]) />
-			
 			<cfset queryAddRow(results) />
 			
-			<cfset querySetCell(results, 'key', plugin.getKey()) />
-			<cfset querySetCell(results, 'plugin', plugin.getPlugin()) />
-			<cfset querySetCell(results, 'versionCurrent', plugin.getVersion()) />
+			<cfif variables.transport.theApplication.managers.plugin.has(plugins[i])>
+				<cfset plugin = variables.transport.theApplication.managers.plugin.get(plugins[i]) />
+				
+				<cfset querySetCell(results, 'key', plugin.getKey()) />
+				<cfset querySetCell(results, 'plugin', plugin.getPlugin()) />
+				<cfset querySetCell(results, 'versionCurrent', plugin.getVersion()) />
+			<cfelse>
+				<cfset querySetCell(results, 'key', plugins[i]) />
+				<cfset querySetCell(results, 'plugin', plugins[i]) />
+				<cfset querySetCell(results, 'versionCurrent', '—') />
+			</cfif>
 		</cfloop>
 		
 		<!--- Check against the update sources to see if there is an update available. --->
 		<cfif arguments.options.checkForUpdates>
-			<cfset pluginSites = getPluginSites(arguments.options.refreshCache) />
-			
 			<cfloop from="1" to="#arrayLen(plugins)#" index="i">
 				<cfif not structKeyExists(pluginSites.plugins, plugins[i])>
 					<cfset querySetCell(results, 'versionAvailable', '—', i ) />
