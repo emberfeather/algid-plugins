@@ -3,7 +3,10 @@
 		<plugin position="main">
 			<list position="action"/>
 			<install position="action"/>
-			<update position="action"/>
+			
+			<update position="action">
+				<list position="action"/>
+			</update>
 			
 			<source position="main">
 				<add position="action"/>

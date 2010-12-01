@@ -1,10 +1,5 @@
-<cfset servPlugin = services.get('plugins', 'plugin') />
-
-<cfif cgi.request_method eq 'post'>
-	<!--- Update the URL and redirect --->
-	<cfloop list="#form.fieldnames#" index="field">
-		<cfset theURL.set('', field, form[field]) />
-	</cfloop>
-	
-	<cfset theURL.redirect() />
+<!--- Redirect to the list page if no selection made --->
+<cfif theUrl.searchUrl('plugin') eq ''>
+	<cfset theURL.setRedirect('_base', '/admin/plugin/update/list') />
+	<cfset theURL.redirectRedirect() />
 </cfif>
