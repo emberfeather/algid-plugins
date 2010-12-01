@@ -2,13 +2,14 @@
 	<cffunction name="checkVersion" access="private" returntype="struct" output="false">
 		<cfargument name="plugin" type="string" required="true" />
 		<cfargument name="versionUrl" type="string" required="true" />
+		<cfargument name="refreshCache" type="boolean" default="false" />
 		
 		<cfset var currentPlugin = '' />
 		<cfset var source = '' />
 		
 		<cfset currentPlugin = getPlugin(arguments.plugin) />
 		
-		<cfif not currentPlugin.hasRemoteVersion()>
+		<cfif arguments.refreshCache or not currentPlugin.hasRemoteVersion()>
 			<cfhttp method="get" url="#arguments.versionUrl#" result="source" />
 			
 			<!--- Don't cache it if we didn't find the correct format --->
@@ -51,6 +52,7 @@
 		
 		<cfparam name="arguments.filter.orderBy" default="" />
 		<cfparam name="arguments.filter.search" default="" />
+		<cfparam name="arguments.filter.refreshCache" default="false" />
 		<cfparam name="arguments.options.checkForUpdates" default="false" />
 		
 		<cfset app = variables.transport.theApplication.managers.singleton.getApplication() />
@@ -72,7 +74,7 @@
 		
 		<!--- Check against the update sources to see if there is an update available. --->
 		<cfif arguments.options.checkForUpdates>
-			<cfset pluginSites = getPluginSites() />
+			<cfset pluginSites = getPluginSites(arguments.filter.refreshCache) />
 			
 			<cfloop from="1" to="#arrayLen(plugins)#" index="i">
 				<cfif not structKeyExists(pluginSites.plugins, plugins[i])>
@@ -85,17 +87,17 @@
 				
 				<cfif useThreaded>
 					<!--- Use a separate thread to read each check --->
-					<cfthread action="run" name="#randomPrefix##i#" plugin="#plugins[i]#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#">
+					<cfthread action="run" name="#randomPrefix##i#" plugin="#plugins[i]#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#" refeshCache="#arguments.filter.refreshCache#">
 						<cfset var version = '' />
 						
-						<cfset version = attributes.checkVersion(attributes.plugin, attributes.pluginUrl) />
+						<cfset version = attributes.checkVersion(attributes.plugin, attributes.pluginUrl, attributes.refeshCache) />
 						
 						<cfset querySetCell(attributes.results, 'versionAvailable', version.version, attributes.index ) />
 					</cfthread>
 					
 					<cfset currThreads = listAppend(currThreads, '#randomPrefix##i#') />
 				<cfelse>
-					<cfset version = checkVersion(plugins[i], pluginUrl) />
+					<cfset version = checkVersion(plugins[i], pluginUrl, arguments.filter.refreshCache) />
 					
 					<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
 				</cfif>
@@ -134,6 +136,8 @@
 	</cffunction>
 	
 	<cffunction name="getPluginSites" access="public" returntype="struct" output="false">
+		<cfargument name="refreshCache" type="boolean" default="false" />
+		
 		<cfset var i = '' />
 		<cfset var plugin = '' />
 		<cfset var pluginSites = {} />
@@ -142,7 +146,7 @@
 		
 		<cfset plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
-		<cfif not plugin.hasPluginSites()>
+		<cfif arguments.refreshCache or not plugin.hasPluginSites()>
 			<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
 			
 			<!--- Retrieve the current update URL for plugins --->
