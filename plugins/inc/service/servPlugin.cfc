@@ -19,22 +19,10 @@
 		<cfreturn deserializeJson(source.fileContent) />
 	</cffunction>
 	
-	<cffunction name="getPluginSites" access="private" returntype="struct" output="false">
-		<cfset var i = '' />
-		<cfset var pluginSites = {} />
-		<cfset var pluginSources = '' />
-		<cfset var source = '' />
+	<cffunction name="getPlugin" access="public" returntype="component" output="false">
+		<cfargument name="plugin" type="string" required="true" />
 		
-		<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
-		
-		<!--- Retrieve the current update URL for plugins --->
-		<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
-			<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
-			
-			<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
-		</cfloop>
-		
-		<cfreturn pluginSites />
+		<cfreturn variables.transport.theApplication.managers.plugin.get(arguments.plugin) />
 	</cffunction>
 	
 	<cffunction name="getPlugins" access="public" returntype="query" output="false">
@@ -135,5 +123,23 @@
 		</cfquery>
 		
 		<cfreturn results />
+	</cffunction>
+	
+	<cffunction name="getPluginSites" access="public" returntype="struct" output="false">
+		<cfset var i = '' />
+		<cfset var pluginSites = {} />
+		<cfset var pluginSources = '' />
+		<cfset var source = '' />
+		
+		<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
+		
+		<!--- Retrieve the current update URL for plugins --->
+		<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
+			<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
+			
+			<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
+		</cfloop>
+		
+		<cfreturn pluginSites />
 	</cffunction>
 </cfcomponent>
