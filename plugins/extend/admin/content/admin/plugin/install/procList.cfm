@@ -1,4 +1,7 @@
-<!--- TODO Make sure that the user is in the correct mode for installing --->
+<!--- Make sure that the user is in the correct mode for installing --->
+<cfif transport.theApplication.managers.singleton.getApplication().isProduction()>
+	<cfthrow type="forbidden" message="Cannot update plugins in production mode" detail="When running in production mode the plugins cannot be updated" />
+</cfif>
 
 <cfset servPlugin = services.get('plugins', 'plugin') />
 
