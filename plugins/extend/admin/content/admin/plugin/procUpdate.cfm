@@ -11,6 +11,8 @@
 
 <cfset servPlugin = services.get('plugins', 'plugin') />
 
+<cfset servPlugin.updatePlugin( transport.theSession.managers.singleton.getUser(), theURL.search('plugin') ) />
+
 <!--- Retrieve the object --->
 <cfset plugin = servPlugin.getPlugin( theURL.search('plugin') ) />
 
