@@ -248,7 +248,7 @@
 		Does the actual heavy lifting when updating or installing
 	--->
 	<cffunction name="performUpgrade" access="private" returntype="void" output="false">
-		<cfargument name="updateDirectory" type="string" required="true" />
+		<cfargument name="archiveFile" type="string" required="true" />
 		
 		<!--- TODO Check the prerequisites for the release --->
 		<!--- TODO Backup the existing release --->
@@ -258,16 +258,13 @@
 	</cffunction>
 	
 	<cffunction name="performUpgradeFromArchive" access="private" returntype="void" output="false">
-		<cfargument name="archivePath" type="string" required="true" />
 		<cfargument name="archiveFile" type="string" required="true" />
 		
-		<cfif !fileExists(arguments.archivePath & '/' & arguments.archiveFile)>
+		<cfif !fileExists(arguments.archiveFile)>
 			<cfthrow type="validation" message="Plugin archive file does not exist" />
 		</cfif>
 		
-		<!--- TODO Unarchive the release file to a temporary directory --->
-		
-		<cfset performUpgrade() />
+		<cfset performUpgrade('tar://' & arguments.archiveFile) />
 	</cffunction>
 	
 	<cffunction name="performUpgradeFromUrl" access="private" returntype="void" output="false">
@@ -307,7 +304,7 @@
 			<cfhttp url="#updateInfo.archive#" method="get" file="#archiveFile#" path="#archivePath#" />
 		</cfif>
 		
-		<cfset performUpgradeFromArchive(archivePath, archiveFile) />
+		<cfset performUpgradeFromArchive(expandPath(archivePath & '/' & archiveFile)) />
 	</cffunction>
 	
 	<!---
@@ -364,7 +361,7 @@
 		<!--- Before Upload Event --->
 		<cfset observer.beforeUpload(variables.transport, arguments.currUser, arguments.archiveFile) />
 		
-		<cfset performUpgradeFromFile(arguments.archiveFile) />
+		<cfset performUpgradeFromArchive(arguments.archiveFile) />
 		
 		<!--- After Upload Event --->
 		<cfset observer.afterUpload(variables.transport, arguments.currUser, arguments.archiveFile) />
