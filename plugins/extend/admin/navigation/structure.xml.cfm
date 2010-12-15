@@ -4,6 +4,7 @@
 			<list position="action"/>
 			<install position="action">
 				<list position="action"/>
+				<upload position="action"/>
 			</install>
 			
 			<update position="action">
