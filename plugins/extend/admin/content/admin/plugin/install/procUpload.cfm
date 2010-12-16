@@ -4,7 +4,7 @@
 	<!--- Process the form submission --->
 	
 	<!--- Upload file --->
-	<cffile action="upload" filefield="archiveFile" destination="/storage/plugins" result="archiveUpload" nameConflict="overwrite" accept="application/zip,application/x-gtar,application/x-gzip">
+	<cffile action="upload" filefield="archiveFile" destination="#transport.theApplication.managers.plugin.getPlugins().getStoragePath()#" result="archiveUpload" nameConflict="overwrite" accept="application/zip,application/x-gtar,application/x-gzip">
 	
 	<cfset servUpdate.uploadPlugin(transport.theSession.managers.singleton.getUser(), archiveUpload.serverDirectory & '/' & archiveUpload.serverFile) />
 	
