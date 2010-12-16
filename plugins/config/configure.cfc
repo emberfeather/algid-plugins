@@ -11,7 +11,7 @@ component extends="algid.inc.resource.plugin.configure" {
 		storagePath = plugin.getStoragePath();
 		
 		// Make sure the directories exist
-		for (i in ['downloads', 'backups']) {
+		for (i in ['downloads', 'backups', 'upload']) {
 			if (!directoryExists(storagePath & '/' & i)) {
 				directoryCreate(storagePath & '/' & i);
 			}
