@@ -3,8 +3,10 @@
 <cfif cgi.request_method eq 'post'>
 	<!--- Process the form submission --->
 	
-	<!--- Read uploaded file --->
-	<cfset servUpdate.uploadPlugin(transport.theSession.managers.singleton.getUser(), form.archiveFile) />
+	<!--- Upload file --->
+	<cffile action="upload" filefield="archiveFile" destination="/storage/plugins" result="archiveUpload" nameConflict="overwrite" accept="application/zip,application/x-gtar,application/x-gzip">
+	
+	<cfset servUpdate.uploadPlugin(transport.theSession.managers.singleton.getUser(), archiveUpload.serverDirectory & '/' & archiveUpload.serverFile) />
 	
 	<!--- Add a success message --->
 	<!--- TODO Use i18n --->

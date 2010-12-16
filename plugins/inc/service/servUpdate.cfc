@@ -32,7 +32,58 @@
 	<cffunction name="performUpgrade" access="private" returntype="void" output="false">
 		<cfargument name="archiveFile" type="string" required="true" />
 		
-		<!--- TODO Check the prerequisites for the release --->
+		<cfset var archiveInfo = {} />
+		<cfset var i = '' />
+		<cfset var installedPlugin = '' />
+		<cfset var pluginInfo = '' />
+		<cfset var raw = '' />
+		<cfset var results = '' />
+		<cfset var versionInfo = '' />
+		<cfset var versions = '' />
+		
+		<!--- Retrieve the version file information --->
+		<cfdirectory action="list" directory="#arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
+		
+		<cfif not results.recordCount>
+			<cfthrow type="validation" message="No version file found in archive" detail="The version.json file was not found in the archive" />
+		</cfif>
+		
+		<!--- Get the archive information for installing --->
+		<cfset archiveInfo.root = results.directory & '/' />
+		
+		<!--- Read out the version information --->
+		<cfset raw = fileRead(archiveInfo.root & 'version.json') />
+		
+		<cfif not isJson(raw)>
+			<cfthrow type="validation" message="Version file not in correct format" detail="The version.json file not a JSON formatted file" />
+		</cfif>
+		
+		<cfset versionInfo = deserializeJson(raw) />
+		
+		<!--- Read out the plugin information --->
+		<cfset raw = fileRead(archiveInfo.root & versionInfo.key & '/config/plugin.json.cfm') />
+		
+		<cfif not isJson(raw)>
+			<cfthrow type="validation" message="Config file not in correct format" detail="The plugin.json.cfm file not a JSON formatted file" />
+		</cfif>
+		
+		<cfset pluginInfo = deserializeJson(raw) />
+		
+		<!--- Check the prerequisites for the release --->
+		<cfloop list="#structKeyList(pluginInfo.prerequisites)#" index="i">
+			<cfif not variables.transport.theApplication.managers.plugin.has(i)>
+				<cfthrow type="validation" message="Missing required plugin" detail="The '#i#' plugin is required as a prerequisite with a #pluginInfo.prerequisites[i]# version" />
+			</cfif>
+			
+			<cfset versions = variables.transport.theApplication.managers.singleton.getVersions() />
+			
+			<cfset installedPlugin = variables.transport.theApplication.managers.plugin.get(i) />
+			
+			<cfif versions.compareVersions(installedPlugin.getVersion(), pluginInfo.prerequisites[i]) lt 0>
+				<cfthrow type="validation" message="Plugin upgrade required" detail="The '#i#' plugin is required to be at least at version #pluginInfo.prerequisites[i]#" />
+			</cfif>
+		</cfloop>
+		
 		<!--- TODO Backup the existing release --->
 		<!--- TODO Copy over existing files --->
 		<!--- TODO Clear trusted template cache --->
@@ -42,11 +93,22 @@
 	<cffunction name="performUpgradeFromArchive" access="private" returntype="void" output="false">
 		<cfargument name="archiveFile" type="string" required="true" />
 		
+		<cfset var prefix = '' />
+		
 		<cfif !fileExists(arguments.archiveFile)>
 			<cfthrow type="validation" message="Plugin archive file does not exist" />
 		</cfif>
 		
-		<cfset performUpgrade('tar://' & arguments.archiveFile) />
+		<!--- Determine correct protocol for accessing archive --->
+		<cfif right(arguments.archiveFile, 4) eq '.zip'>
+			<cfset prefix = 'zip://' />
+		<cfelseif right(arguments.archiveFile, 4) eq '.tar'>
+			<cfset prefix = 'tar://' />
+		<cfelseif right(arguments.archiveFile, 7) eq '.tar.gz'>
+			<cfset prefix = 'tgz://' />
+		</cfif>
+		
+		<cfset performUpgrade(prefix & arguments.archiveFile) />
 	</cffunction>
 	
 	<cffunction name="performUpgradeFromUrl" access="private" returntype="void" output="false">
