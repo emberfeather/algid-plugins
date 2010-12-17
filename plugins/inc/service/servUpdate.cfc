@@ -53,10 +53,10 @@
 		<cfset archiveInfo = retrieveInfoFromArchive(arguments.archivePath, arguments.archiveFile) />
 		
 		<!--- Read out the plugin information --->
-		<cfset raw = fileRead(arguments.archivePath & archiveInfo.key & '/config/plugin.json.cfm') />
+		<cfset raw = fileRead(arguments.archivePath & archiveInfo.key & '/config/project.json.cfm') />
 		
 		<cfif not isJson(raw)>
-			<cfthrow type="validation" message="Config file not in correct format" detail="The plugin.json.cfm file not a JSON formatted file" />
+			<cfthrow type="validation" message="Config file not in correct format" detail="The project.json.cfm file not a JSON formatted file" />
 		</cfif>
 		
 		<cfset pluginInfo = deserializeJson(raw) />
