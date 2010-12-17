@@ -116,27 +116,30 @@
 			<cfthrow type="validation" message="Update site did not contain an archive" detail="The update url `#arguments.updateUrl#` did not contain an archive" />
 		</cfif>
 		
-		<cfset updateInfo['archivePath'] = variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/downloads' />
-		<cfset updateInfo['archiveFile'] = updateInfo.key & '-' & updateInfo.version & determineExtension(updateInfo.archive) />
+		<cfset archiveInfo['archivePath'] = variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/downloads' />
+		<cfset archiveInfo['archiveFile'] = archiveInfo.key & '-' & archiveInfo.version & determineExtension(archiveInfo.archive) />
 		
 		<!--- Retrieve if not already downloaded --->
-		<cfif not fileExists(updateInfo.archivePath & '/' & updateInfo.archiveFile)>
+		<cfif not fileExists(archiveInfo.archivePath & '/' & archiveInfo.archiveFile)>
 			<!--- Download the archive from the update site --->
-			<cfhttp url="#updateInfo.archive#" method="get" file="#updateInfo.archiveFile#" path="#updateInfo.archivePath#" getAsBinary="true" />
+			<cfhttp url="#archiveInfo.archive#" method="get" file="#archiveInfo.archiveFile#" path="#archiveInfo.archivePath#" getAsBinary="true" />
 		</cfif>
 		
-		<cfreturn updateInfo />
+		<cfreturn archiveInfo />
 	</cffunction>
 	
 	<cffunction name="retrieveArchives" access="public" returntype="array" output="false">
-		<cfargument name="plugins" type="array" default="[]" />
+		<cfargument name="plugins" type="array" default="#[]#" />
 		
 		<cfset var i = '' />
 		<cfset var pluginSites = '' />
 		<cfset var results = [] />
+		<cfset var servPlugin = '' />
+		
+		<cfset servPlugin = getService('plugins', 'plugin') />
 		
 		<!--- Use the update url for the plugin to update --->
-		<cfset pluginSites = getPluginSites() />
+		<cfset pluginSites = servPlugin.getPluginSites() />
 		
 		<!--- Allow for retrieving all plugins --->
 		<cfif !arrayLen(arguments.plugins)>
@@ -148,7 +151,7 @@
 				<cfthrow type="validation" message="Cannot find update site url" detail="No update site url found for the #arguments.plugins[i]# plugin" />
 			</cfif>
 			
-			<cfset arrayAppend(results, retrieveArchives(arguments.plugins[i])) />
+			<cfset arrayAppend(results, retrieveArchive(pluginSites.plugins[arguments.plugins[i]].versionUrl)) />
 		</cfloop>
 		
 		<cfreturn results />

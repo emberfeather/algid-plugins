@@ -1,5 +1,5 @@
 <!--- Redirect to the list page if no selection made --->
-<cfif theUrl.searchUrl('plugin') eq ''>
+<cfif theUrl.search('plugin') eq ''>
 	<cfset theURL.setRedirect('_base', '/admin/plugin/install/list') />
 	<cfset theURL.redirectRedirect() />
 </cfif>
@@ -10,9 +10,18 @@
 </cfif>
 
 <cfset servPlugin = services.get('plugins', 'plugin') />
+<cfset servUpdate = services.get('plugins', 'update') />
+
+<cfset currentPlugin = theUrl.search('plugin') />
+
+<cfset archiveInfo = servUpdate.retrieveArchives([ currentPlugin ]) />
+
+<!--- TODO Remove --->
+<cfdump var="#archiveInfo#" />
+<cfabort />
 
 <!--- Retrieve the object --->
-<cfset plugin = servPlugin.getPlugin( theURL.search('plugin') ) />
+<cfset plugin = servPlugin.getPlugin( currentPlugin ) />
 
 <!--- Add to the current levels --->
 <cfset template.addLevel(plugin.getPlugin(), plugin.getPlugin(), theUrl.get(), 0, true) />
