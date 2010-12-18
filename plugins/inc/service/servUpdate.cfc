@@ -162,6 +162,7 @@
 		<cfargument name="archiveFile" type="string" required="true" />
 		
 		<cfset var archiveInfo = '' />
+		<cfset var raw = '' />
 		<cfset var results = '' />
 		
 		<!--- Retrieve the version file information --->

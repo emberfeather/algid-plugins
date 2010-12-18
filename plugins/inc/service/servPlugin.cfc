@@ -66,7 +66,7 @@
 		<cfset var plugin = '' />
 		<cfset var plugins = '' />
 		<cfset var pluginSites = '' />
-		<cfset var pluginUrls = '' />
+		<cfset var pluginUrl = '' />
 		<cfset var randomPrefix = 'p-' & left(createUUID(), 8) & '-' />
 		<cfset var results = '' />
 		<cfset var tempObj = '' />
