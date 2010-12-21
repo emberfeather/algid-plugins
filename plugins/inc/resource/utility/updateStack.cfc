@@ -14,4 +14,14 @@ component extends="cf-compendium.inc.resource.utility.stack" {
 		
 		super.push(arguments.value);
 	}
+	
+	public void function remove(required any value) {
+		var index = '';
+		
+		index = arrayFind(variables.stack, arguments.value);
+		
+		if(index) {
+			arrayDeleteAt(variables.stack, index);
+		}
+	}
 }
