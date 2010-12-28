@@ -189,33 +189,6 @@
 		<cfreturn archiveInfo />
 	</cffunction>
 	
-	<!---
-		Upgrade from the update url
-	--->
-	<cffunction name="updatePlugin" access="public" returntype="void" output="false">
-		<cfargument name="currUser" type="component" required="true" />
-		<cfargument name="plugin" type="string" required="true" />
-		
-		<cfset var observer = '' />
-		<cfset var pluginSites = '' />
-		
-		<!--- Check to make sure that we are not in production mode --->
-		<cfif variables.transport.theApplication.managers.singleton.getApplication().isProduction()>
-			<cfthrow type="validation" message="Cannot update plugin while running in production mode" detail="Change environment to the maintenance mode to update a plugin" />
-		</cfif>
-		
-		<!--- Get the event observer --->
-		<cfset observer = getPluginObserver('plugins', 'plugin') />
-		
-		<!--- Before Update Event --->
-		<cfset observer.beforeUpdate(variables.transport, arguments.currUser, arguments.plugin) />
-		
-		<!--- TODO perform the actual update --->
-		
-		<!--- After Update Event --->
-		<cfset observer.afterUpdate(variables.transport, arguments.currUser, arguments.plugin) />
-	</cffunction>
-	
 	<cffunction name="uploadArchive" access="public" returntype="struct" output="false">
 		<cfargument name="uploadFile" type="string" required="true" />
 		
