@@ -32,6 +32,22 @@ component {
 		return structKeyExists(variables.changes, arguments.plugin);
 	}
 	
+	public boolean function isEmpty() {
+		return variables.changeStack.isEmpty();
+	}
+	
+	public struct function pop() {
+		var key = '';
+		var plugin = '';
+		
+		key = variables.changeStack.pop();
+		plugin = get(key);
+		
+		structDelete(variables.changes, key);
+		
+		return plugin;
+	}
+	
 	public void function unmark( required string plugin ) {
 		if(structKeyExists(variables.changes, arguments.plugin)) {
 			structDelete(variables.changes, arguments.plugin);

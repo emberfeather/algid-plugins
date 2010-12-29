@@ -50,6 +50,25 @@
 		<cfreturn protocol />
 	</cffunction>
 	
+	<cffunction name="executeUpdates" access="public" returntype="void" output="false">
+		<cfargument name="request" type="struct" required="true" />
+		
+		<cfset var plugin = '' />
+		<cfset var updateManager = '' />
+		<cfset var updateOrder = '' />
+		
+		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		
+		<cfif updateManager.isEmpty()>
+			<cfthrow type="validation" message="No plugins updates marked" detail="No plugins were marked for updating" />
+		</cfif>
+		
+		<cfloop condition="not updateManager.isEmpty()">
+			<cfset plugin = updateManager.pop() />
+			
+		</cfloop>
+	</cffunction>
+	
 	<cffunction name="getUpdates" access="public" returntype="struct" output="false">
 		<cfset var updateManager = '' />
 		

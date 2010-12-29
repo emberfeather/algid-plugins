@@ -36,7 +36,8 @@ component extends="algid.inc.resource.base.view" {
 			
 			theForm.addElement('password', {
 				name = 'webAdminPassword',
-                label = 'webAdminPassword',
+				label = 'webAdminPassword',
+				required = true,
 				value = ''
 			});
 			
