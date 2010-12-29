@@ -34,9 +34,10 @@ component extends="algid.inc.resource.base.view" {
 			// Add the resource bundle for the view
 			theForm.addBundle('plugins/plugins/i18n/inc/view', 'viewUpdate');
 			
-			theForm.addElement('hidden', {
-				name = 'confirm',
-				value = 'confirm'
+			theForm.addElement('password', {
+				name = 'webAdminPassword',
+                label = 'webAdminPassword',
+				value = ''
 			});
 			
 			html &= theForm.toHTML(theURL.get(), { submit: 'executeUpdate' });
