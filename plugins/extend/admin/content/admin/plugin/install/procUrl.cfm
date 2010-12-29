@@ -6,7 +6,10 @@
 	<!--- Process the form submission --->
 	<cfset archiveInfo = servUpdate.retrieveArchive(transport.theForm.updateUrl) />
 	
-	<!--- TODO Remove --->
-	<cfdump var="#archiveInfo#" />
-	<cfabort />
+	<cfset servUpdate.markForUpdate(archiveInfo) />
+	
+	<!--- Redirect to the update overview --->
+	<cfset theURL.setRedirect('_base', '/admin/plugin/update/execute') />
+	<cfset theURL.removeRedirect('plugin') />
+	<cfset theURL.redirectRedirect() />
 </cfif>

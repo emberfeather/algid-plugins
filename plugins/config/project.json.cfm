@@ -2,6 +2,7 @@
 	"applicationSingletons": {
 	},
 	"applicationTransients": {
+		"updateManager": "plugins.plugins.inc.resource.manager.update"
 	},
 	"i18n": {
 		"locales": [

@@ -16,12 +16,9 @@
 
 <cfset archiveInfo = servUpdate.retrieveArchives([ currentPlugin ]) />
 
-<!--- TODO Remove --->
-<cfdump var="#archiveInfo#" />
-<cfabort />
+<cfset servUpdate.markForUpdate(archiveInfo) />
 
-<!--- Retrieve the object --->
-<cfset plugin = servPlugin.getPlugin( currentPlugin ) />
-
-<!--- Add to the current levels --->
-<cfset template.addLevel(plugin.getPlugin(), plugin.getPlugin(), theUrl.get(), 0, true) />
+<!--- Redirect to the update overview --->
+<cfset theURL.setRedirect('_base', '/admin/plugin/update/execute') />
+<cfset theURL.removeRedirect('plugin') />
+<cfset theURL.redirectRedirect() />

@@ -1,4 +1,16 @@
 <cfcomponent extends="algid.inc.resource.base.service" output="false">
+	<cffunction name="init" access="public" returntype="component" output="false">
+		<cfargument name="transport" type="struct" required="true" />
+		
+		<cfset super.init(argumentCollection = arguments) />
+		
+		<cfif not variables.transport.theSession.managers.singleton.hasUpdateManager()>
+			<cfset variables.transport.theSession.managers.singleton.setUpdateManager( variables.transport.theApplication.factories.transient.getUpdateManager() ) />
+		</cfif>
+		
+		<cfreturn this />
+	</cffunction>
+	
 	<cffunction name="determineExtension" access="public" returntype="string" output="false">
 		<cfargument name="filename" type="string" required="true" />
 		
@@ -36,6 +48,29 @@
 		</cfif>
 		
 		<cfreturn protocol />
+	</cffunction>
+	
+	<cffunction name="getUpdates" access="public" returntype="struct" output="false">
+		<cfset var updateManager = '' />
+		
+		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		
+		<cfreturn updateManager.get() />
+	</cffunction>
+	
+	<cffunction name="markForUpdate" access="public" returntype="void" output="false">
+		<cfargument name="pluginInfo" type="any" required="true" />
+		
+		<cfset var updateManager = '' />
+		
+		<!--- Ensure argument format --->
+		<cfif not isArray(arguments.pluginInfo)>
+			<cfset arguments.pluginInfo = [ arguments.pluginInfo ] />
+		</cfif>
+		
+		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		
+		<cfset updateManager.mark(arguments.pluginInfo) />
 	</cffunction>
 	
 	<cffunction name="performUpgrade" access="private" returntype="void" output="false">
