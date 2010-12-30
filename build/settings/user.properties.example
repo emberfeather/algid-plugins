@@ -1,9 +1,6 @@
 # General
 general.verbose=true
 
-# Build Settings
-build.wiki=/path/to/wiki/files
-
 # Test Settings
 test.host=localhost
 test.port=8500
