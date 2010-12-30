@@ -67,6 +67,8 @@
 			<cfset pluginInfo = updateManager.pop() />
 			
 			<cftry>
+				<cfset performUpdate(pluginInfo) />
+				
 				<cfcatch type="any">
 					<!--- Mark in update manager since it didn't complete successfully --->
 					<cfset updateManager.mark(pluginInfo) />
@@ -75,6 +77,9 @@
 				</cfcatch>
 			</cftry>
 		</cfloop>
+		
+		<!--- Clear template cache --->
+		<cfset pagePoolClear() />
 	</cffunction>
 	
 	<cffunction name="getUpdates" access="public" returntype="struct" output="false">
@@ -100,54 +105,62 @@
 		<cfset updateManager.mark(arguments.pluginInfo) />
 	</cffunction>
 	
-	<cffunction name="performUpgrade" access="private" returntype="void" output="false">
-		<cfargument name="archivePath" type="string" required="true" />
-		<cfargument name="archiveFile" type="string" required="true" />
+	<cffunction name="performUpdate" access="private" returntype="void" output="false">
+		<cfargument name="pluginInfo" type="struct" required="true" />
 		
-		<cfset var archiveInfo = {} />
-		<cfset var i = '' />
-		<cfset var installedPlugin = '' />
-		<cfset var pluginInfo = '' />
-		<cfset var raw = '' />
+		<cfset var baseLen = '' />
+		<cfset var basePath = '' />
+		<cfset var filePath = '' />
+		<cfset var fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
 		<cfset var results = '' />
-		<cfset var versions = '' />
+		<cfset var settingsFile = '{}' />
 		
-		<cfset archiveInfo = retrieveInfoFromArchive(arguments.archivePath, arguments.archiveFile) />
+		<!--- Retrieve the version file information --->
+		<cfdirectory action="list" directory="#arguments.pluginInfo.archiveRoot##arguments.pluginInfo.key#" name="results" recurse="true" type="file" />
 		
-		<!--- Read out the plugin information --->
-		<cfset raw = fileRead(arguments.archivePath & archiveInfo.key & '/config/project.json.cfm') />
-		
-		<cfif not isJson(raw)>
-			<cfthrow type="validation" message="Config file not in correct format" detail="The project.json.cfm file not a JSON formatted file" />
+		<cfif not results.recordCount>
+			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.pluginInfo.key#` did not contain any files" />
 		</cfif>
 		
-		<cfset pluginInfo = deserializeJson(raw) />
+		<!--- Copy settings file --->
+		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm')>
+			<cfset settingsFile = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm') />
+		</cfif>
 		
-		<!--- Check the prerequisites for the release --->
-		<cfloop list="#structKeyList(pluginInfo.prerequisites)#" index="i">
-			<cfif not variables.transport.theApplication.managers.plugin.has(i)>
-				<cfthrow type="validation" message="Missing required plugin" detail="The '#i#' plugin is required as a prerequisite with a #pluginInfo.prerequisites[i]# version" />
+		<!--- Backup the existing release --->
+		<cfif directoryExists('/plugins/' & arguments.pluginInfo.key)>
+			<cfset directoryRename(
+				'/plugins/' & arguments.pluginInfo.key,
+				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups' & arguments.pluginInfo.key & '-' & fileStamp
+			) />
+		</cfif>
+		
+		<!--- Copy archive files --->
+		<cfset baseLen = len(arguments.pluginInfo.archiveRoot & arguments.pluginInfo.key) />
+		
+		<cfset basePath = '/plugins/' & arguments.pluginInfo.key & '/' />
+		
+		<cfif not directoryExists(basePath)>
+			<cfset directoryCreate(basePath) />
+		</cfif>
+		
+		<!--- Copy all the files from the archive into the plugins directory --->
+		<cfloop query="results">
+			<cfset filePath = basePath />
+			
+			<cfif len(results.directory) gt baseLen>
+				<cfset filePath &= right(results.directory, len(results.directory) - baseLen) />
 			</cfif>
 			
-			<cfset versions = variables.transport.theApplication.managers.singleton.getVersions() />
-			
-			<cfset installedPlugin = variables.transport.theApplication.managers.plugin.get(i) />
-			
-			<cfif versions.compareVersions(installedPlugin.getVersion(), pluginInfo.prerequisites[i]) lt 0>
-				<cfthrow type="validation" message="Plugin upgrade required" detail="The '#i#' plugin is required to be at least at version #pluginInfo.prerequisites[i]#" />
+			<cfif not directoryExists(filePath)>
+				<cfset directoryCreate(filePath) />
 			</cfif>
+			
+			<cfset fileCopy(results.directory & '/' & results.name, filePath & '/' & results.name) />
 		</cfloop>
 		
-		<!--- TODO Backup the existing release --->
-		<!--- TODO Copy over existing files --->
-		<!--- TODO Clear trusted template cache --->
-		<!--- TODO Reinitialize application --->
-		
-		<!--- TODO Remove --->
-		<cfdump var="#results#" />
-		<cfdump var="#archiveInfo#" />
-		<cfdump var="#pluginInfo#" />
-		<cfabort />
+		<!--- Write the plugin settings --->
+		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm', settingsFile) />
 	</cffunction>
 	
 	<cffunction name="retrieveArchive" access="public" returntype="struct" output="false">
@@ -178,14 +191,16 @@
 			<cfthrow type="validation" message="Update site did not contain an archive" detail="The update url `#arguments.updateUrl#` did not contain an archive" />
 		</cfif>
 		
-		<cfset archiveInfo['archivePath'] = variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/downloads' />
-		<cfset archiveInfo['archiveFile'] = archiveInfo.key & '-' & archiveInfo.version & determineExtension(archiveInfo.archive) />
+		<cfset archivePath = variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/downloads' />
+		<cfset archiveFile = archiveInfo.key & '-' & archiveInfo.version & determineExtension(archiveInfo.archive) />
 		
 		<!--- Retrieve if not already downloaded --->
-		<cfif not fileExists(archiveInfo.archivePath & '/' & archiveInfo.archiveFile)>
+		<cfif not fileExists(archivePath & '/' & archiveFile)>
 			<!--- Download the archive from the update site --->
-			<cfhttp url="#archiveInfo.archive#" method="get" file="#archiveInfo.archiveFile#" path="#archiveInfo.archivePath#" getAsBinary="true" />
+			<cfhttp url="#archiveInfo.archive#" method="get" file="#archiveFile#" path="#archivePath#" getAsBinary="true" />
 		</cfif>
+		
+		<cfset archiveInfo = retrieveInfoFromArchive(expandPath(archivePath), archiveFile) />
 		
 		<cfreturn archiveInfo />
 	</cffunction>
