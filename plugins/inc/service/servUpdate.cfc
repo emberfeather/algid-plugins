@@ -131,7 +131,7 @@
 		<cfif directoryExists('/plugins/' & arguments.pluginInfo.key)>
 			<cfset directoryRename(
 				'/plugins/' & arguments.pluginInfo.key,
-				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups' & arguments.pluginInfo.key & '-' & fileStamp
+				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups/' & arguments.pluginInfo.key & '-' & fileStamp
 			) />
 		</cfif>
 		
