@@ -2,12 +2,16 @@
 	<admin position="main">
 		<plugin position="main">
 			<list position="action"/>
+			
 			<install position="action">
 				<list position="action"/>
+				<upload position="action"/>
+				<url position="action"/>
 			</install>
 			
 			<update position="action">
 				<all position="action"/>
+				<execute position="action"/>
 				<list position="action"/>
 			</update>
 			

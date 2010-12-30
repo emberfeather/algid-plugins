@@ -2,6 +2,7 @@
 	"applicationSingletons": {
 	},
 	"applicationTransients": {
+		"updateManager": "plugins.plugins.inc.resource.manager.update"
 	},
 	"i18n": {
 		"locales": [
@@ -18,6 +19,7 @@
 		}
 	],
 	"prerequisites": {
+		"algid": "0.1.3"
 	},
 	"requestSingletons": {
 	},
