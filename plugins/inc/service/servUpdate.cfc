@@ -112,8 +112,11 @@
 		<cfset var basePath = '' />
 		<cfset var filePath = '' />
 		<cfset var fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
+		<cfset var files = {
+			settings = '',
+			version = ''
+		} />
 		<cfset var results = '' />
-		<cfset var settingsFile = '{}' />
 		
 		<!--- Retrieve the version file information --->
 		<cfdirectory action="list" directory="#arguments.pluginInfo.archiveRoot##arguments.pluginInfo.key#" name="results" recurse="true" type="file" />
@@ -122,9 +125,13 @@
 			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.pluginInfo.key#` did not contain any files" />
 		</cfif>
 		
-		<!--- Copy settings file --->
+		<!--- Copy file contents --->
 		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm')>
-			<cfset settingsFile = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm') />
+			<cfset files.settings = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm') />
+		</cfif>
+		
+		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm')>
+			<cfset files.version = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm') />
 		</cfif>
 		
 		<!--- Backup the existing release --->
@@ -159,8 +166,9 @@
 			<cfset fileCopy(results.directory & '/' & results.name, filePath & '/' & results.name) />
 		</cfloop>
 		
-		<!--- Write the plugin settings --->
-		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm', settingsFile) />
+		<!--- Write the files --->
+		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm', files.settings) />
+		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm', files.version) />
 	</cffunction>
 	
 	<cffunction name="retrieveArchive" access="public" returntype="struct" output="false">
