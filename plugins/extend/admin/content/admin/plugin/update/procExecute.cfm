@@ -7,12 +7,7 @@
 
 <cfif cgi.request_method eq 'post'>
 	<!--- Execute Update Process --->
-	<cfset servUpdate.executeUpdates(form) />
-	
-	<!--- Add a success message --->
-	<!--- TODO use i18n --->
-	<cfset session.managers.singleton.getSuccess().addMessages('The plugins were successfully upgraded.') />
-	<cfset session.managers.singleton.getWarning().addMessages('The plugins may not be enabled until the application configuration file is updated.') />
+	<cfset servUpdate.executeUpdates() />
 	
 	<!--- Redirect to the overview --->
 	<cfset theURL.setRedirect('_base', '/admin/plugin') />

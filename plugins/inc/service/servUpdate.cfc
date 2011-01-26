@@ -51,11 +51,13 @@
 	</cffunction>
 	
 	<cffunction name="executeUpdates" access="public" returntype="void" output="false">
-		<cfargument name="request" type="struct" required="true" />
-		
 		<cfset var pluginInfo = '' />
 		<cfset var updateManager = '' />
 		<cfset var updateOrder = '' />
+		<cfset var observer = '' />
+		
+		<!--- Get the event observer --->
+		<cfset observer = getPluginObserver('plugins', 'update') />
 		
 		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
 		
@@ -63,8 +65,12 @@
 			<cfthrow type="validation" message="No plugins updates marked" detail="No plugins were marked for updating" />
 		</cfif>
 		
+		<cfset observer.beforeUpdates(variables.transport) />
+		
 		<cfloop condition="not updateManager.isEmpty()">
 			<cfset pluginInfo = updateManager.pop() />
+			
+			<cfset observer.beforeUpdate(variables.transport, pluginInfo) />
 			
 			<cftry>
 				<cfset performUpdate(pluginInfo) />
@@ -76,7 +82,11 @@
 					<cfrethrow />
 				</cfcatch>
 			</cftry>
+			
+			<cfset observer.afterUpdate(variables.transport, pluginInfo) />
 		</cfloop>
+		
+		<cfset observer.afterUpdates(variables.transport) />
 		
 		<!--- Clear template cache --->
 		<cfset pagePoolClear() />
