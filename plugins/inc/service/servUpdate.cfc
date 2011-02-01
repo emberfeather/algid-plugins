@@ -51,11 +51,13 @@
 	</cffunction>
 	
 	<cffunction name="executeUpdates" access="public" returntype="void" output="false">
-		<cfargument name="request" type="struct" required="true" />
-		
 		<cfset var pluginInfo = '' />
 		<cfset var updateManager = '' />
 		<cfset var updateOrder = '' />
+		<cfset var observer = '' />
+		
+		<!--- Get the event observer --->
+		<cfset observer = getPluginObserver('plugins', 'update') />
 		
 		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
 		
@@ -63,8 +65,12 @@
 			<cfthrow type="validation" message="No plugins updates marked" detail="No plugins were marked for updating" />
 		</cfif>
 		
+		<cfset observer.beforeUpdates(variables.transport) />
+		
 		<cfloop condition="not updateManager.isEmpty()">
 			<cfset pluginInfo = updateManager.pop() />
+			
+			<cfset observer.beforeUpdate(variables.transport, pluginInfo) />
 			
 			<cftry>
 				<cfset performUpdate(pluginInfo) />
@@ -76,7 +82,11 @@
 					<cfrethrow />
 				</cfcatch>
 			</cftry>
+			
+			<cfset observer.afterUpdate(variables.transport, pluginInfo) />
 		</cfloop>
+		
+		<cfset observer.afterUpdates(variables.transport) />
 		
 		<!--- Clear template cache --->
 		<cfset pagePoolClear() />
@@ -112,8 +122,11 @@
 		<cfset var basePath = '' />
 		<cfset var filePath = '' />
 		<cfset var fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
+		<cfset var files = {
+			settings = '',
+			version = ''
+		} />
 		<cfset var results = '' />
-		<cfset var settingsFile = '{}' />
 		
 		<!--- Retrieve the version file information --->
 		<cfdirectory action="list" directory="#arguments.pluginInfo.archiveRoot##arguments.pluginInfo.key#" name="results" recurse="true" type="file" />
@@ -122,9 +135,13 @@
 			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.pluginInfo.key#` did not contain any files" />
 		</cfif>
 		
-		<!--- Copy settings file --->
+		<!--- Copy file contents --->
 		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm')>
-			<cfset settingsFile = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm') />
+			<cfset files.settings = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm') />
+		</cfif>
+		
+		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm')>
+			<cfset files.version = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm') />
 		</cfif>
 		
 		<!--- Backup the existing release --->
@@ -159,8 +176,9 @@
 			<cfset fileCopy(results.directory & '/' & results.name, filePath & '/' & results.name) />
 		</cfloop>
 		
-		<!--- Write the plugin settings --->
-		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm', settingsFile) />
+		<!--- Write the files --->
+		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm', files.settings) />
+		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm', files.version) />
 	</cffunction>
 	
 	<cffunction name="retrieveArchive" access="public" returntype="struct" output="false">
