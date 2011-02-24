@@ -4,6 +4,7 @@
 
 <cfif cgi.request_method eq 'post'>
 	<!--- Process the form submission --->
+	<cfsetting requesttimeout="300" />
 	
 	<!--- Upload file --->
 	<cffile action="upload" filefield="archiveFile" destination="#transport.theApplication.managers.plugin.getPlugins().getStoragePath()#/upload" result="archiveUpload" nameConflict="overwrite" accept="application/zip,application/x-gtar,application/x-gzip">
