@@ -29,7 +29,7 @@ component extends="algid.inc.resource.base.view" {
 		html = datagrid.toHTML( arguments.data, arguments.options );
 		
 		if( structCount(arguments.data) ) {
-			theForm = variables.transport.theApplication.factories.transient.getFormStandard('executeUpdate', i18n);
+			theForm = variables.transport.theApplication.factories.transient.getForm('executeUpdate', i18n);
 			
 			// Add the resource bundle for the view
 			theForm.addBundle('plugins/plugins/i18n/inc/view', 'viewUpdate');
@@ -54,7 +54,7 @@ component extends="algid.inc.resource.base.view" {
 		
 		i18n = variables.transport.theApplication.managers.singleton.getI18N();
 		theURL = variables.transport.theRequest.managers.singleton.getUrl();
-		theForm = variables.transport.theApplication.factories.transient.getFormStandard('updateUrl', i18n);
+		theForm = variables.transport.theApplication.factories.transient.getForm('updateUrl', i18n);
 		
 		// Add the resource bundle for the view
 		theForm.addBundle('plugins/plugins/i18n/inc/view', 'viewUpdate');
@@ -75,7 +75,7 @@ component extends="algid.inc.resource.base.view" {
 		
 		i18n = variables.transport.theApplication.managers.singleton.getI18N();
 		theURL = variables.transport.theRequest.managers.singleton.getUrl();
-		theForm = variables.transport.theApplication.factories.transient.getFormStandard('pluginUpload', i18n);
+		theForm = variables.transport.theApplication.factories.transient.getForm('pluginUpload', i18n);
 		
 		// Add the resource bundle for the view
 		theForm.addBundle('plugins/plugins/i18n/inc/view', 'viewUpdate');
