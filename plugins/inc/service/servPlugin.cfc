@@ -200,7 +200,7 @@
 		<cfset plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
 		<cfif arguments.refreshCache or not plugin.hasPluginSites()>
-			<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
+			<cfset pluginSources = plugin.getPluginSources() />
 			
 			<!--- Retrieve the current update URL for plugins --->
 			<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
