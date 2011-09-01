@@ -73,7 +73,7 @@
 		
 		<cfif arguments.options.showInstall>
 			<cfset datagrid.addColumn({
-				class = 'phantom align-right',
+				class = 'phantom align-right width-min',
 				value = [ 'install' ],
 				link = {
 					'plugin' = 'key',
@@ -85,7 +85,7 @@
 		
 		<cfif arguments.options.showUpdate>
 			<cfset datagrid.addColumn({
-				class = 'phantom align-right',
+				class = 'phantom align-right width-min',
 				value = [ 'update' ],
 				link = {
 					'plugin' = 'key',
