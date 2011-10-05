@@ -264,6 +264,8 @@
 		<cfdirectory action="list" directory="#determineProtocol(arguments.archiveFile)##arguments.archivePath#/#arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
 		
 		<cfif not results.recordCount>
+			<cfset fileDelete(arguments.archivePath & '/' & arguments.archiveFile) />
+			
 			<cfthrow type="validation" message="No version file found in archive" detail="The version.json file was not found in the archive" />
 		</cfif>
 		
@@ -271,6 +273,8 @@
 		<cfset raw = fileRead(results.directory & '/version.json') />
 		
 		<cfif not isJson(raw)>
+			<cfset fileDelete(arguments.archivePath & '/' & arguments.archiveFile) />
+			
 			<cfthrow type="validation" message="Version file not in correct format" detail="The version.json file not a JSON formatted file" />
 		</cfif>
 		
