@@ -70,7 +70,6 @@
 		<cfset var randomPrefix = 'p-' & left(createUUID(), 8) & '-' />
 		<cfset var results = '' />
 		<cfset var tempObj = '' />
-		<cfset var useThreaded = false />
 		<cfset var version = '' />
 		
 		<cfset arguments.filter = variables.extend({
@@ -87,8 +86,6 @@
 		
 		<cfset app = variables.transport.theApplication.managers.singleton.getApplication() />
 		<cfset tempObj = variables.transport.theApplication.factories.transient.getObject() />
-		
-		<cfset useThreaded = app.getUseThreaded() />
 		
 		<cfset pluginSites = getPluginSites(arguments.options.refreshCache) />
 		
@@ -138,34 +135,10 @@
 				
 				<cfset pluginUrl = pluginSites.plugins[plugins[i]].versionUrl />
 				
-				<cfif useThreaded>
-					<!--- Use a separate thread to read each check --->
-					<cfthread action="run" name="#randomPrefix##i#" plugin="#plugins[i]#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#" refeshCache="#arguments.options.refreshCache#">
-						<cfset var version = '' />
-						
-						<cfset version = attributes.checkVersion(attributes.plugin, attributes.pluginUrl, attributes.refeshCache) />
-						
-						<cfset querySetCell(attributes.results, 'versionAvailable', version.version, attributes.index ) />
-					</cfthread>
-					
-					<cfset currThreads = listAppend(currThreads, '#randomPrefix##i#') />
-				<cfelse>
-					<cfset version = checkVersion(plugins[i], pluginUrl, arguments.options.refreshCache) />
-					
-					<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
-				</cfif>
-			</cfloop>
-			
-			<!--- Join the threads so we don't return prematurely --->
-			<cfif useThreaded>
-				<cfthread action="join" name="#currThreads#" timeout="10000" />
+				<cfset version = checkVersion(plugins[i], pluginUrl, arguments.options.refreshCache) />
 				
-				<cfloop list="#currThreads#" index="i">
-					<cfif cfthread[i].status eq 'terminated'>
-						<cfthrow message="#cfthread[i].error.message#" detail="#cfthread[i].error.detail#" extendedinfo="#cfthread[i].error.stacktrace#" />
-					</cfif>
-				</cfloop>
-			</cfif>
+				<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
+			</cfloop>
 		</cfif>
 		
 		<cfquery name="results" dbtype="query">
