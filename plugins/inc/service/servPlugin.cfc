@@ -193,4 +193,10 @@
 		
 		<cfreturn pluginSites />
 	</cffunction>
+	
+	<cffunction name="getPluginSources" access="public" returntype="array" output="false">
+		<cfset local.plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
+		
+		<cfreturn local.plugin.getPluginSources() />
+	</cffunction>
 </cfcomponent>
