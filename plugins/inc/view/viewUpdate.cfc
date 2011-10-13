@@ -68,7 +68,7 @@ component extends="algid.inc.resource.base.view" {
 		return theForm.toHTML(theURL.get());
 	}
 	
-	public string function upload(struct request) {
+	public string function upload() {
 		var i18n = '';
 		var theForm = '';
 		var theURL = '';
@@ -82,8 +82,8 @@ component extends="algid.inc.resource.base.view" {
 		
 		theForm.addElement('file', {
 			name = "archiveFile",
-			label = "archiveFile",
-			value = ( structKeyExists(arguments.request, 'archiveFile') ? arguments.request.archiveFile : '' )
+			class = "allowDuplication",
+			label = "archiveFile"
 		});
 		
 		return theForm.toHTML(theURL.get());

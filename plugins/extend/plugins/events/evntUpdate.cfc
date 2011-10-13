@@ -3,6 +3,10 @@ component extends="algid.inc.resource.base.event" {
 		arguments.transport.theSession.managers.singleton.getSuccess().addMessages('The plugin ''' & arguments.pluginInfo.key & ''' was successfully updated.');
 	}
 	
+	public void function afterMark( required struct transport, required struct pluginInfo ) {
+		arguments.transport.theSession.managers.singleton.getSuccess().addMessages('The plugin ''' & arguments.pluginInfo.key & ''' was marked for update.');
+	}
+	
 	public void function afterUpdates( required struct transport ) {
 		arguments.transport.theSession.managers.singleton.getWarning().addMessages('The plugins may not be enabled until the application configuration file is updated.');
 	}

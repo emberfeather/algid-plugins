@@ -103,16 +103,19 @@
 	<cffunction name="markForUpdate" access="public" returntype="void" output="false">
 		<cfargument name="pluginInfo" type="any" required="true" />
 		
-		<cfset var updateManager = '' />
-		
 		<!--- Ensure argument format --->
 		<cfif not isArray(arguments.pluginInfo)>
 			<cfset arguments.pluginInfo = [ arguments.pluginInfo ] />
 		</cfif>
 		
-		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		<cfset local.observer = getPluginObserver('plugins', 'update') />
 		
-		<cfset updateManager.mark(arguments.pluginInfo) />
+		<cfset local.observer.beforeMark(variables.transport, arguments.pluginInfo) />
+		
+		<cfset local.updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		<cfset local.updateManager.mark(arguments.pluginInfo) />
+		
+		<cfset local.observer.afterMark(variables.transport, arguments.pluginInfo) />
 	</cffunction>
 	
 	<cffunction name="performUpdate" access="private" returntype="void" output="false">
