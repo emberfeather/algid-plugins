@@ -165,6 +165,20 @@
 		<cfreturn results />
 	</cffunction>
 	
+	<cffunction name="getPluginSettings" access="public" returntype="string" output="false">
+		<cfargument name="plugin" type="string" required="true" />
+		
+		<cfset local.observer = getPluginObserver('plugins', 'plugin') />
+		
+		<cfset local.observer.beforeGetPluginSettings(variables.transport, arguments.plugin) />
+		
+		<cfset local.settings = fileRead('/plugins/#arguments.plugin#/config/settings.json.cfm') />
+		
+		<cfset local.observer.afterGetPluginSettings(variables.transport, arguments.plugin) />
+		
+		<cfreturn local.settings />
+	</cffunction>
+	
 	<cffunction name="getPluginSites" access="public" returntype="struct" output="false">
 		<cfargument name="refreshCache" type="boolean" default="false" />
 		
@@ -198,5 +212,36 @@
 		<cfset local.plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
 		<cfreturn local.plugin.getPluginSources() />
+	</cffunction>
+	
+	<cffunction name="setPluginSettings" access="public" returntype="void" output="false">
+		<cfargument name="plugin" type="string" required="true" />
+		<cfargument name="raw" type="string" required="true" />
+		
+		<cfif not isJson(arguments.raw)>
+			<cfthrow type="validation" message="Plugin settings not in JSON format" detail="Settings provided for the #arguments.plugin# plugin were not in the JSON format" />
+		</cfif>
+		
+		<cfif not fileExists('/plugins/#arguments.plugin#/config/settings.json.cfm')>
+			<cfthrow message="Unable to find the settings file" detail="Unable to find the #arguments.plugin# settings file" />
+		</cfif>
+		
+		<cfset local.settings = deserializeJson(arguments.raw) />
+		
+		<cfset local.observer = getPluginObserver('plugins', 'plugin') />
+		
+		<cfset local.observer.beforeSetPluginSettings(variables.transport, arguments.plugin, local.settings) />
+		
+		<!--- Update the loaded --->
+		<cfset local.plugin = variables.transport.theApplication.managers.plugin.get(arguments.plugin) />
+		
+		<cfloop list="#structKeyList(local.settings)#" index="local.i">
+			<cfset local.plugin['set' & local.i](local.settings[local.i]) />
+		</cfloop>
+		
+		<!--- Write the plugin changes to the file system --->
+		<cfset fileWrite('/plugins/#arguments.plugin#/config/settings.json.cfm', serializeJson(local.settings)) />
+		
+		<cfset local.observer.afterSetPluginSettings(variables.transport, arguments.plugin, local.settings) />
 	</cffunction>
 </cfcomponent>

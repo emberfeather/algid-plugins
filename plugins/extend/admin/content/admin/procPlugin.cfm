@@ -9,5 +9,21 @@
 <!--- Retrieve the object --->
 <cfset plugin = servPlugin.getPlugin( theURL.search('plugin') ) />
 
+<!--- Get the current settings --->
+<cfset pluginSettings = servPlugin.getPluginSettings(plugin.getKey()) />
+
+<cfif cgi.request_method eq 'post'>
+	<cfset pluginSettings = form.settings />
+	
+	<cfset servPlugin.setPluginSettings( plugin.getKey(), pluginSettings ) />
+	
+	<!--- Redirect --->
+	<cfset theURL.setRedirect('_base', '/admin/plugin/list') />
+	<cfset theURL.removeRedirect('plugin') />
+	
+	<cfset theURL.redirectRedirect() />
+</cfif>
+
 <!--- Add to the current levels --->
 <cfset template.addLevel(plugin.getPlugin(), plugin.getPlugin(), theUrl.get(), 0, true) />
+<cfset template.addScript(transport.theRequest.webroot & '/plugins/plugins/script/admin/plugin.settings.js') />
