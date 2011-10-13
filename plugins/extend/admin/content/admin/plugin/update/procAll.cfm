@@ -1,6 +1,9 @@
+<cfset servPlugin = services.get('plugins', 'plugin') />
 <cfset servUpdate = services.get('plugins', 'update') />
 
-<cfset archiveInfo = servUpdate.retrieveArchives() />
+<cfset plugins = servPlugin.getPlugins( {}, { checkForUpdates: true, refreshCache: theUrl.searchBoolean('refreshCache') } ) />
+
+<cfset archiveInfo = servUpdate.retrieveArchives(listToArray(valueList(plugins.key))) />
 
 <cfset servUpdate.markForUpdate(archiveInfo) />
 

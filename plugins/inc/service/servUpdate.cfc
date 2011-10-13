@@ -243,7 +243,7 @@
 		
 		<cfloop from="1" to="#arrayLen(arguments.plugins)#" index="i">
 			<cfif not structKeyExists(pluginSites.plugins, arguments.plugins[i]) or not structKeyExists(pluginSites.plugins[arguments.plugins[i]], 'versionUrl')>
-				<cfthrow type="validation" message="Cannot find update site url" detail="No update site url found for the #arguments.plugins[i]# plugin" />
+				<cfthrow type="validation" message="Cannot find update site url for #arguments.plugins[i]#" detail="No update site url found for the #arguments.plugins[i]# plugin" />
 			</cfif>
 			
 			<cfset arrayAppend(results, retrieveArchive(pluginSites.plugins[arguments.plugins[i]].versionUrl)) />
