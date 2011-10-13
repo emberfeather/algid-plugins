@@ -177,6 +177,10 @@
 				AND plugin LIKE <cfqueryparam cfsqltype="cf_sql_varchar" value="%#arguments.filter.search#%" />
 			</cfif>
 			
+			<cfif arguments.options.checkForUpdates>
+				AND versionCurrent <> versionAvailable
+			</cfif>
+			
 			ORDER BY
 			<cfswitch expression="#arguments.filter.orderBy#">
 				<cfdefaultcase>
