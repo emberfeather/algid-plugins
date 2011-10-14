@@ -185,17 +185,17 @@
 		<cfset var i = '' />
 		<cfset var plugin = '' />
 		<cfset var pluginSites = {} />
-		<cfset var pluginSources = '' />
+		<cfset var sources = '' />
 		<cfset var source = '' />
 		
 		<cfset plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
 		<cfif arguments.refreshCache or not plugin.hasPluginSites()>
-			<cfset pluginSources = plugin.getPluginSources() />
+			<cfset sources = plugin.getSources() />
 			
 			<!--- Retrieve the current update URL for plugins --->
-			<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
-				<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
+			<cfloop from="1" to="#arrayLen(sources)#" index="i">
+				<cfhttp method="get" url="#sources[i].sourceUrl#" result="source" />
 				
 				<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
 			</cfloop>
@@ -208,10 +208,10 @@
 		<cfreturn pluginSites />
 	</cffunction>
 	
-	<cffunction name="getPluginSources" access="public" returntype="array" output="false">
+	<cffunction name="getSources" access="public" returntype="array" output="false">
 		<cfset local.plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
-		<cfreturn local.plugin.getPluginSources() />
+		<cfreturn local.plugin.getSources() />
 	</cffunction>
 	
 	<cffunction name="setPluginSettings" access="public" returntype="void" output="false">
