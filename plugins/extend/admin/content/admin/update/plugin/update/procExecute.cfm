@@ -10,6 +10,6 @@
 	<cfset servUpdate.executeUpdates() />
 	
 	<!--- Redirect to the overview --->
-	<cfset theURL.setRedirect('_base', '/admin/plugin') />
+	<cfset theURL.setRedirect('_base', '/admin/update/plugin') />
 	<cfset theURL.redirectRedirect() />
 </cfif>

@@ -23,7 +23,7 @@
 			label = 'plugin',
 			link = {
 				'plugin' = 'key',
-				'_base' = '/admin/plugin'
+				'_base' = '/admin/update/plugin'
 			}
 		}) />
 		
@@ -45,7 +45,7 @@
 				value = [ 'install' ],
 				link = {
 					'plugin' = 'key',
-					'_base' = '/admin/plugin/install'
+					'_base' = '/admin/update/plugin/install'
 				},
 				title = 'plugin'
 			}) />
@@ -57,7 +57,7 @@
 				value = [ 'update' ],
 				link = {
 					'plugin' = 'key',
-					'_base' = '/admin/plugin/update'
+					'_base' = '/admin/update/plugin/update'
 				},
 				title = 'plugin'
 			}) />

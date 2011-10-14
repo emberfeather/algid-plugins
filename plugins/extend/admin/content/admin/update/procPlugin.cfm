@@ -1,6 +1,6 @@
 <!--- Redirect to the list page if no selection made --->
 <cfif theUrl.searchUrl('plugin') eq ''>
-	<cfset theURL.setRedirect('_base', '/admin/plugin/list') />
+	<cfset theURL.setRedirect('_base', '/admin/update/plugin/list') />
 	<cfset theURL.redirectRedirect() />
 </cfif>
 
@@ -18,7 +18,7 @@
 	<cfset servPlugin.setPluginSettings( plugin.getKey(), pluginSettings ) />
 	
 	<!--- Redirect --->
-	<cfset theURL.setRedirect('_base', '/admin/plugin/list') />
+	<cfset theURL.setRedirect('_base', '/admin/update/plugin/list') />
 	<cfset theURL.removeRedirect('plugin') />
 	
 	<cfset theURL.redirectRedirect() />
