@@ -1,0 +1,1 @@
+(function(a){a(function(){JSON.stringify&&a(".form .element.settings textarea").change(function(){var c=a(this),b=a.trim(c.val());b.length||(b="{}");try{c.val(JSON.stringify(JSON.parse(b),null,"\t"))}catch(d){window.console&&window.console.error(d)}}).change()})})(jQuery);
