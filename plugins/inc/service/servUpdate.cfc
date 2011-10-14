@@ -132,10 +132,6 @@
 		<cfset var basePath = '' />
 		<cfset var filePath = '' />
 		<cfset var fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
-		<cfset var files = {
-			settings = '',
-			version = ''
-		} />
 		<cfset var results = '' />
 		
 		<cfset basePath = (arguments.isPlugin ? '/plugins/' : '/') & arguments.info.key />
@@ -145,15 +141,6 @@
 		
 		<cfif not results.recordCount>
 			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.info.key#` did not contain any files" />
-		</cfif>
-		
-		<!--- Copy file contents --->
-		<cfif fileExists(basePath & '/config/settings.json.cfm')>
-			<cfset files.settings = fileRead(basePath & '/config/settings.json.cfm') />
-		</cfif>
-		
-		<cfif fileExists(basePath & '/config/version.json.cfm')>
-			<cfset files.version = fileRead(basePath & '/config/version.json.cfm') />
 		</cfif>
 		
 		<!--- Backup the existing release --->
@@ -185,10 +172,6 @@
 			
 			<cfset fileCopy(results.directory & '/' & results.name, filePath & '/' & results.name) />
 		</cfloop>
-		
-		<!--- Write the files --->
-		<cfset fileWrite(basePath & '/config/settings.json.cfm', files.settings) />
-		<cfset fileWrite(basePath & '/config/version.json.cfm', files.version) />
 	</cffunction>
 	
 	<cffunction name="retrieveArchive" access="public" returntype="struct" output="false">
