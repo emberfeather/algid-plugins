@@ -13,7 +13,10 @@ component extends="algid.inc.resource.base.view" {
 		
 		local.datagrid.addColumn({
 			key = 'sourceUrl',
-			label = 'sourceUrl'
+			label = 'sourceUrl',
+			format = {
+				'url': true
+			}
 		});
 		
 		return datagrid.toHTML( arguments.data, arguments.options );
