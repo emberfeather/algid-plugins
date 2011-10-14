@@ -18,7 +18,7 @@
 	</cfloop>
 	
 	<!--- Redirect to the update overview --->
-	<cfset theURL.setRedirect('_base', '/admin/update/plugin/update/execute') />
+	<cfset theURL.setRedirect('_base', '/admin/update/execute') />
 	<cfset theURL.removeRedirect('plugin') />
 	<cfset theURL.redirectRedirect() />
 </cfif>

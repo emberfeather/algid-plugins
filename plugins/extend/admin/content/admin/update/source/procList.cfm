@@ -1,4 +1,4 @@
-<cfset servPlugin = services.get('plugins', 'plugin') />
+<cfset servUpdate = services.get('plugins', 'update') />
 
 <cfif cgi.request_method eq 'post'>
 	<!--- Update the URL and redirect --->

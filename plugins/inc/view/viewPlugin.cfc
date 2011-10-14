@@ -66,34 +66,6 @@
 		<cfreturn datagrid.toHTML( arguments.data, arguments.options ) />
 	</cffunction>
 	
-	<cffunction name="datagridSource" access="public" returntype="string" output="false">
-		<cfargument name="data" type="any" required="true" />
-		<cfargument name="options" type="struct" default="#{}#" />
-		
-		<cfset var datagrid = '' />
-		<cfset var i18n = '' />
-		<cfset var timeago = '' />
-		
-		<cfset arguments.options.theURL = variables.transport.theRequest.managers.singleton.getURL() />
-		<cfset i18n = variables.transport.theApplication.managers.singleton.getI18N() />
-		<cfset datagrid = variables.transport.theApplication.factories.transient.getDatagrid(i18n, variables.transport.theSession.managers.singleton.getSession().getLocale()) />
-		
-		<!--- Add the resource bundle for the view --->
-		<cfset datagrid.addBundle('plugins/plugins/i18n/inc/view', 'viewPlugin') />
-		
-		<cfset datagrid.addColumn({
-			key = 'name',
-			label = 'sourceName'
-		}) />
-		
-		<cfset datagrid.addColumn({
-			key = 'sourceUrl',
-			label = 'sourceUrl'
-		}) />
-		
-		<cfreturn datagrid.toHTML( arguments.data, arguments.options ) />
-	</cffunction>
-	
 	<cffunction name="edit" access="public" returntype="string" output="false">
 		<cfargument name="settings" type="string" required="true" />
 		

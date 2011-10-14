@@ -6,17 +6,18 @@ component {
 		return this;
 	}
 	
-	public void function mark( required any pluginInfo ) {
+	public void function mark( required any info, boolean isPlugin = true ) {
 		var i = '';
 		
-		if(not isArray(arguments.pluginInfo)) {
-			arguments.pluginInfo = [ arguments.pluginInfo ];
+		if(not isArray(arguments.info)) {
+			arguments.info = [ arguments.info ];
 		}
 		
-		for(i = 1; i <= arrayLen(arguments.pluginInfo); i++) {
-			variables.changes[arguments.pluginInfo[i].key] = arguments.pluginInfo[i];
+		for(i = 1; i <= arrayLen(arguments.info); i++) {
+			arguments.info[i].isPlugin = arguments.isPlugin;
+			variables.changes[arguments.info[i].key] = arguments.info[i];
 			
-			variables.changeStack.push(arguments.pluginInfo[i].key);
+			variables.changeStack.push(arguments.info[i].key);
 		}
 	}
 	
