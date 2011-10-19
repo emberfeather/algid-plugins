@@ -12,12 +12,6 @@
 	},
 	"key": "plugins",
 	"plugin": "Plugins",
-	"pluginSources": [
-		{
-			"name": "one20 Plugins",
-			"sourceURL": "https://github.com/emberfeather/one20-directory/raw/master/plugins.json"
-		}
-	],
 	"prerequisites": {
 		"algid": "0.1.3"
 	},
@@ -29,5 +23,11 @@
 	},
 	"sessionTransients": {
 	},
-	"version": "0.1.3"
+	"sources": [
+		{
+			"name": "one20 Directory",
+			"sourceURL": "https://github.com/emberfeather/one20-directory/raw/master/directory.json"
+		}
+	],
+	"version": "0.1.4"
 }

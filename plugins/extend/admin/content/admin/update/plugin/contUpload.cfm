@@ -1,5 +1,5 @@
 <cfset viewUpdate = views.get('plugins', 'update') />
 
 <cfoutput>
-	#viewUpdate.upload(form)#
+	#viewUpdate.upload()#
 </cfoutput>

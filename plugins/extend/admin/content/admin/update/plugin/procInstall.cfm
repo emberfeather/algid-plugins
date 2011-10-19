@@ -1,6 +1,6 @@
 <!--- Redirect to the list page if no selection made --->
 <cfif theUrl.search('plugin') eq ''>
-	<cfset theURL.setRedirect('_base', '/admin/plugin/update/list') />
+	<cfset theURL.setRedirect('_base', '/admin/update/plugin/install/list') />
 	<cfset theURL.redirectRedirect() />
 </cfif>
 
@@ -12,13 +12,13 @@
 <cfset servPlugin = services.get('plugins', 'plugin') />
 <cfset servUpdate = services.get('plugins', 'update') />
 
-<cfset currentPlugin = theURL.search('plugin') />
+<cfset currentPlugin = theUrl.search('plugin') />
 
 <cfset archiveInfo = servUpdate.retrieveArchives([ currentPlugin ]) />
 
 <cfset servUpdate.markForUpdate(archiveInfo) />
 
 <!--- Redirect to the update overview --->
-<cfset theURL.setRedirect('_base', '/admin/plugin/update/execute') />
+<cfset theURL.setRedirect('_base', '/admin/update/execute') />
 <cfset theURL.removeRedirect('plugin') />
 <cfset theURL.redirectRedirect() />

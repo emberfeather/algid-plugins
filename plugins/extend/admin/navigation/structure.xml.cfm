@@ -1,25 +1,43 @@
 <navigation>
 	<admin position="main">
-		<plugin position="main">
-			<list position="action"/>
+		<update>
+			<execute position="action"/>
 			
-			<install position="action">
+			<plugin position="main">
 				<list position="action"/>
 				<upload position="action"/>
-				<url position="action"/>
-			</install>
+				
+				<install position="action">
+					<list position="action"/>
+					<url position="action"/>
+				</install>
+				
+				<update position="action">
+					<all position="action"/>
+					<list position="action"/>
+				</update>
+			</plugin>
 			
-			<update position="action">
-				<all position="action"/>
-				<execute position="action"/>
+			<project position="main">
 				<list position="action"/>
-			</update>
+				<upload position="action"/>
+				
+				<install position="action">
+					<list position="action"/>
+					<url position="action"/>
+				</install>
+				
+				<update position="action">
+					<all position="action"/>
+					<list position="action"/>
+				</update>
+			</project>
 			
 			<source position="main">
 				<add position="action"/>
 				<list position="action"/>
 				<edit position="action"/>
 			</source>
-		</plugin>
+		</update>
 	</admin>
 </navigation>

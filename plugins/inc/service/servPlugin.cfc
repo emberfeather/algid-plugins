@@ -70,7 +70,6 @@
 		<cfset var randomPrefix = 'p-' & left(createUUID(), 8) & '-' />
 		<cfset var results = '' />
 		<cfset var tempObj = '' />
-		<cfset var useThreaded = false />
 		<cfset var version = '' />
 		
 		<cfset arguments.filter = variables.extend({
@@ -87,8 +86,6 @@
 		
 		<cfset app = variables.transport.theApplication.managers.singleton.getApplication() />
 		<cfset tempObj = variables.transport.theApplication.factories.transient.getObject() />
-		
-		<cfset useThreaded = app.getUseThreaded() />
 		
 		<cfset pluginSites = getPluginSites(arguments.options.refreshCache) />
 		
@@ -138,34 +135,10 @@
 				
 				<cfset pluginUrl = pluginSites.plugins[plugins[i]].versionUrl />
 				
-				<cfif useThreaded>
-					<!--- Use a separate thread to read each check --->
-					<cfthread action="run" name="#randomPrefix##i#" plugin="#plugins[i]#" pluginUrl="#pluginUrl#" results="#results#" index="#i#" checkVersion="#checkVersion#" refeshCache="#arguments.options.refreshCache#">
-						<cfset var version = '' />
-						
-						<cfset version = attributes.checkVersion(attributes.plugin, attributes.pluginUrl, attributes.refeshCache) />
-						
-						<cfset querySetCell(attributes.results, 'versionAvailable', version.version, attributes.index ) />
-					</cfthread>
-					
-					<cfset currThreads = listAppend(currThreads, '#randomPrefix##i#') />
-				<cfelse>
-					<cfset version = checkVersion(plugins[i], pluginUrl, arguments.options.refreshCache) />
-					
-					<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
-				</cfif>
-			</cfloop>
-			
-			<!--- Join the threads so we don't return prematurely --->
-			<cfif useThreaded>
-				<cfthread action="join" name="#currThreads#" timeout="10000" />
+				<cfset version = checkVersion(plugins[i], pluginUrl, arguments.options.refreshCache) />
 				
-				<cfloop list="#currThreads#" index="i">
-					<cfif cfthread[i].status eq 'terminated'>
-						<cfthrow message="#cfthread[i].error.message#" detail="#cfthread[i].error.detail#" extendedinfo="#cfthread[i].error.stacktrace#" />
-					</cfif>
-				</cfloop>
-			</cfif>
+				<cfset querySetCell(results, 'versionAvailable', version.version, i ) />
+			</cfloop>
 		</cfif>
 		
 		<cfquery name="results" dbtype="query">
@@ -175,6 +148,10 @@
 			
 			<cfif arguments.filter.search neq ''>
 				AND plugin LIKE <cfqueryparam cfsqltype="cf_sql_varchar" value="%#arguments.filter.search#%" />
+			</cfif>
+			
+			<cfif arguments.options.checkForUpdates>
+				AND versionCurrent <> versionAvailable
 			</cfif>
 			
 			ORDER BY
@@ -188,23 +165,37 @@
 		<cfreturn results />
 	</cffunction>
 	
+	<cffunction name="getPluginSettings" access="public" returntype="string" output="false">
+		<cfargument name="plugin" type="component" required="true" />
+		
+		<cfset local.observer = getPluginObserver('plugins', 'plugin') />
+		
+		<cfset local.observer.beforeGetPluginSettings(variables.transport, arguments.plugin) />
+		
+		<cfset local.settings = fileRead('/plugins/#arguments.plugin#/config/settings.json.cfm') />
+		
+		<cfset local.observer.afterGetPluginSettings(variables.transport, arguments.plugin) />
+		
+		<cfreturn local.settings />
+	</cffunction>
+	
 	<cffunction name="getPluginSites" access="public" returntype="struct" output="false">
 		<cfargument name="refreshCache" type="boolean" default="false" />
 		
 		<cfset var i = '' />
 		<cfset var plugin = '' />
 		<cfset var pluginSites = {} />
-		<cfset var pluginSources = '' />
+		<cfset var sources = '' />
 		<cfset var source = '' />
 		
 		<cfset plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
 		
 		<cfif arguments.refreshCache or not plugin.hasPluginSites()>
-			<cfset pluginSources = variables.transport.theApplication.managers.plugin.get('plugins').getPluginSources() />
+			<cfset sources = plugin.getSources() />
 			
 			<!--- Retrieve the current update URL for plugins --->
-			<cfloop from="1" to="#arrayLen(pluginSources)#" index="i">
-				<cfhttp method="get" url="#pluginSources[i].sourceUrl#" result="source" />
+			<cfloop from="1" to="#arrayLen(sources)#" index="i">
+				<cfhttp method="get" url="#sources[i].sourceUrl#" result="source" />
 				
 				<cfset pluginSites = variables.extend(pluginSites, deserializeJson(source.fileContent)) />
 			</cfloop>
@@ -215,5 +206,36 @@
 		</cfif>
 		
 		<cfreturn pluginSites />
+	</cffunction>
+	
+	<cffunction name="setPluginSettings" access="public" returntype="void" output="false">
+		<cfargument name="plugin" type="component" required="true" />
+		<cfargument name="raw" type="string" required="true" />
+		
+		<cfif not isJson(arguments.raw)>
+			<cfthrow type="validation" message="Plugin settings not in JSON format" detail="Settings provided for the #arguments.plugin# plugin were not in the JSON format" />
+		</cfif>
+		
+		<cfif not fileExists('/plugins/#arguments.plugin#/config/settings.json.cfm')>
+			<cfthrow message="Unable to find the settings file" detail="Unable to find the #arguments.plugin# settings file" />
+		</cfif>
+		
+		<cfset local.settings = deserializeJson(arguments.raw) />
+		
+		<cfset local.observer = getPluginObserver('plugins', 'plugin') />
+		
+		<cfset local.observer.beforeSetPluginSettings(variables.transport, arguments.plugin, local.settings) />
+		
+		<!--- Update the loaded --->
+		<cfset local.plugin = variables.transport.theApplication.managers.plugin.get(arguments.plugin) />
+		
+		<cfloop list="#structKeyList(local.settings)#" index="local.i">
+			<cfset local.plugin['set' & local.i](local.settings[local.i]) />
+		</cfloop>
+		
+		<!--- Write the plugin changes to the file system --->
+		<cfset fileWrite('/plugins/#arguments.plugin#/config/settings.json.cfm', serializeJson(local.settings)) />
+		
+		<cfset local.observer.afterSetPluginSettings(variables.transport, arguments.plugin, local.settings) />
 	</cffunction>
 </cfcomponent>

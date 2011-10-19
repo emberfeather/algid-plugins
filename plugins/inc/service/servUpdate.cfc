@@ -51,7 +51,7 @@
 	</cffunction>
 	
 	<cffunction name="executeUpdates" access="public" returntype="void" output="false">
-		<cfset var pluginInfo = '' />
+		<cfset var info = '' />
 		<cfset var updateManager = '' />
 		<cfset var updateOrder = '' />
 		<cfset var observer = '' />
@@ -62,34 +62,40 @@
 		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
 		
 		<cfif updateManager.isEmpty()>
-			<cfthrow type="validation" message="No plugins updates marked" detail="No plugins were marked for updating" />
+			<cfthrow type="validation" message="No updates marked" detail="No updates were marked for updating" />
 		</cfif>
 		
 		<cfset observer.beforeUpdates(variables.transport) />
 		
 		<cfloop condition="not updateManager.isEmpty()">
-			<cfset pluginInfo = updateManager.pop() />
+			<cfset info = updateManager.pop() />
 			
-			<cfset observer.beforeUpdate(variables.transport, pluginInfo) />
+			<cfset observer.beforeUpdate(variables.transport, info) />
 			
 			<cftry>
-				<cfset performUpdate(pluginInfo) />
+				<cfset performUpdate(info) />
 				
 				<cfcatch type="any">
 					<!--- Mark in update manager since it didn't complete successfully --->
-					<cfset updateManager.mark(pluginInfo) />
+					<cfset updateManager.mark(info) />
 					
 					<cfrethrow />
 				</cfcatch>
 			</cftry>
 			
-			<cfset observer.afterUpdate(variables.transport, pluginInfo) />
+			<cfset observer.afterUpdate(variables.transport, info) />
 		</cfloop>
 		
 		<cfset observer.afterUpdates(variables.transport) />
 		
 		<!--- Clear template cache --->
 		<cfset pagePoolClear() />
+	</cffunction>
+	
+	<cffunction name="getSources" access="public" returntype="array" output="false">
+		<cfset local.plugin = variables.transport.theApplication.managers.plugin.get('plugins') />
+		
+		<cfreturn local.plugin.getSources() />
 	</cffunction>
 	
 	<cffunction name="getUpdates" access="public" returntype="struct" output="false">
@@ -101,61 +107,52 @@
 	</cffunction>
 	
 	<cffunction name="markForUpdate" access="public" returntype="void" output="false">
-		<cfargument name="pluginInfo" type="any" required="true" />
-		
-		<cfset var updateManager = '' />
+		<cfargument name="info" type="any" required="true" />
 		
 		<!--- Ensure argument format --->
-		<cfif not isArray(arguments.pluginInfo)>
-			<cfset arguments.pluginInfo = [ arguments.pluginInfo ] />
+		<cfif not isArray(arguments.info)>
+			<cfset arguments.info = [ arguments.info ] />
 		</cfif>
 		
-		<cfset updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		<cfset local.observer = getPluginObserver('plugins', 'update') />
 		
-		<cfset updateManager.mark(arguments.pluginInfo) />
+		<cfset local.observer.beforeMark(variables.transport, arguments.info) />
+		
+		<cfset local.updateManager = variables.transport.theSession.managers.singleton.getUpdateManager() />
+		<cfset local.updateManager.mark(arguments.info) />
+		
+		<cfset local.observer.afterMark(variables.transport, arguments.info) />
 	</cffunction>
 	
 	<cffunction name="performUpdate" access="private" returntype="void" output="false">
-		<cfargument name="pluginInfo" type="struct" required="true" />
+		<cfargument name="info" type="struct" required="true" />
+		<cfargument name="isPlugin" type="boolean" default="true" />
 		
 		<cfset var baseLen = '' />
 		<cfset var basePath = '' />
 		<cfset var filePath = '' />
 		<cfset var fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
-		<cfset var files = {
-			settings = '',
-			version = ''
-		} />
 		<cfset var results = '' />
 		
+		<cfset basePath = (arguments.isPlugin ? '/plugins/' : '/') & arguments.info.key />
+		
 		<!--- Retrieve the version file information --->
-		<cfdirectory action="list" directory="#arguments.pluginInfo.archiveRoot##arguments.pluginInfo.key#" name="results" recurse="true" type="file" />
+		<cfdirectory action="list" directory="#arguments.info.archiveRoot##arguments.info.key#" name="results" recurse="true" type="file" />
 		
 		<cfif not results.recordCount>
-			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.pluginInfo.key#` did not contain any files" />
-		</cfif>
-		
-		<!--- Copy file contents --->
-		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm')>
-			<cfset files.settings = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm') />
-		</cfif>
-		
-		<cfif fileExists('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm')>
-			<cfset files.version = fileRead('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm') />
+			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.info.key#` did not contain any files" />
 		</cfif>
 		
 		<!--- Backup the existing release --->
-		<cfif directoryExists('/plugins/' & arguments.pluginInfo.key)>
+		<cfif directoryExists(basePath)>
 			<cfset directoryRename(
-				'/plugins/' & arguments.pluginInfo.key,
-				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups/' & arguments.pluginInfo.key & '-' & fileStamp
+				basePath,
+				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups/' & arguments.info.key & '-' & fileStamp
 			) />
 		</cfif>
 		
 		<!--- Copy archive files --->
-		<cfset baseLen = len(arguments.pluginInfo.archiveRoot & arguments.pluginInfo.key) />
-		
-		<cfset basePath = '/plugins/' & arguments.pluginInfo.key & '/' />
+		<cfset baseLen = len(arguments.info.archiveRoot & arguments.info.key) />
 		
 		<cfif not directoryExists(basePath)>
 			<cfset directoryCreate(basePath) />
@@ -166,7 +163,7 @@
 			<cfset filePath = basePath />
 			
 			<cfif len(results.directory) gt baseLen>
-				<cfset filePath &= right(results.directory, len(results.directory) - baseLen) />
+				<cfset filePath &= '/' & right(results.directory, len(results.directory) - baseLen) />
 			</cfif>
 			
 			<cfif not directoryExists(filePath)>
@@ -175,10 +172,6 @@
 			
 			<cfset fileCopy(results.directory & '/' & results.name, filePath & '/' & results.name) />
 		</cfloop>
-		
-		<!--- Write the files --->
-		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/settings.json.cfm', files.settings) />
-		<cfset fileWrite('/plugins/' & arguments.pluginInfo.key & '/config/version.json.cfm', files.version) />
 	</cffunction>
 	
 	<cffunction name="retrieveArchive" access="public" returntype="struct" output="false">
@@ -243,7 +236,7 @@
 		
 		<cfloop from="1" to="#arrayLen(arguments.plugins)#" index="i">
 			<cfif not structKeyExists(pluginSites.plugins, arguments.plugins[i]) or not structKeyExists(pluginSites.plugins[arguments.plugins[i]], 'versionUrl')>
-				<cfthrow type="validation" message="Cannot find update site url" detail="No update site url found for the #arguments.plugins[i]# plugin" />
+				<cfthrow type="validation" message="Cannot find update site url for #arguments.plugins[i]#" detail="No update site url found for the #arguments.plugins[i]# plugin" />
 			</cfif>
 			
 			<cfset arrayAppend(results, retrieveArchive(pluginSites.plugins[arguments.plugins[i]].versionUrl)) />
@@ -264,6 +257,8 @@
 		<cfdirectory action="list" directory="#determineProtocol(arguments.archiveFile)##arguments.archivePath#/#arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
 		
 		<cfif not results.recordCount>
+			<cfset fileDelete(arguments.archivePath & '/' & arguments.archiveFile) />
+			
 			<cfthrow type="validation" message="No version file found in archive" detail="The version.json file was not found in the archive" />
 		</cfif>
 		
@@ -271,6 +266,8 @@
 		<cfset raw = fileRead(results.directory & '/version.json') />
 		
 		<cfif not isJson(raw)>
+			<cfset fileDelete(arguments.archivePath & '/' & arguments.archiveFile) />
+			
 			<cfthrow type="validation" message="Version file not in correct format" detail="The version.json file not a JSON formatted file" />
 		</cfif>
 		
