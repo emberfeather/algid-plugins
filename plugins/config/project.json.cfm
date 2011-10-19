@@ -29,5 +29,5 @@
 			"sourceURL": "https://github.com/emberfeather/one20-directory/raw/master/directory.json"
 		}
 	],
-	"version": "0.1.4"
+	"version": "0.1.5"
 }
