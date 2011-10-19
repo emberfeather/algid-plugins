@@ -10,7 +10,7 @@
 <cfset plugin = servPlugin.getPlugin( theURL.search('plugin') ) />
 
 <!--- Get the current settings --->
-<cfset pluginSettings = servPlugin.getPluginSettings(plugin.getKey()) />
+<cfset pluginSettings = servPlugin.getPluginSettings(plugin) />
 
 <cfif cgi.request_method eq 'post'>
 	<cfset pluginSettings = form.settings />
