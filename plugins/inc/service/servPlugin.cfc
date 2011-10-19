@@ -166,7 +166,7 @@
 	</cffunction>
 	
 	<cffunction name="getPluginSettings" access="public" returntype="string" output="false">
-		<cfargument name="plugin" type="string" required="true" />
+		<cfargument name="plugin" type="component" required="true" />
 		
 		<cfset local.observer = getPluginObserver('plugins', 'plugin') />
 		
@@ -209,7 +209,7 @@
 	</cffunction>
 	
 	<cffunction name="setPluginSettings" access="public" returntype="void" output="false">
-		<cfargument name="plugin" type="string" required="true" />
+		<cfargument name="plugin" type="component" required="true" />
 		<cfargument name="raw" type="string" required="true" />
 		
 		<cfif not isJson(arguments.raw)>
