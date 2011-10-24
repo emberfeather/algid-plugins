@@ -136,7 +136,7 @@
 		
 		<cfset basePath = (arguments.isPlugin ? '/plugins/' : '/') & arguments.info.key />
 		
-		<!--- Retrieve the version file information --->
+		<!--- Retrieve the list of files --->
 		<cfdirectory action="list" directory="#arguments.info.archiveRoot##arguments.info.key#" name="results" recurse="true" type="file" />
 		
 		<cfif not results.recordCount>
