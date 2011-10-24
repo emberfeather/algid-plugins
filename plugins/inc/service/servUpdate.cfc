@@ -132,14 +132,7 @@
 		
 		<cfset local.basePath = (arguments.isPlugin ? '/plugins/' : '/') & arguments.info.key />
 		
-		<!--- Retrieve the list of files --->
-		<cfdirectory action="list" directory="#arguments.info.archiveRoot##arguments.info.key#" name="local.results" recurse="false" type="dir" />
-		
-		<cfif not local.results.recordCount>
-			<cfthrow type="validation" message="Archive did not contain the main directory" detail="The archive file for `#arguments.info.key#` did not contain the container directory" />
-		</cfif>
-		
-		<cfset local.sourceBase = local.results.directory & local.results.name & '/' & arguments.info.key />
+		<cfset local.sourceBase = arguments.info.archiveRoot & arguments.info.key />
 		<cfset local.sourceBaseLen = len(local.sourceBase) />
 		
 		<!--- Retrieve the list of files --->
@@ -166,7 +159,7 @@
 			<cfset local.filePath = local.basePath />
 			
 			<cfif len(local.results.directory) gt local.sourceBaseLen>
-				<cfset local.filePath &= '/' & right(local.results.directory, len(local.results.directory) - local.sourceBaseLen) />
+				<cfset local.filePath &= right(local.results.directory, len(local.results.directory) - local.sourceBaseLen) />
 			</cfif>
 			
 			<cfif not directoryExists(local.filePath)>
@@ -256,8 +249,12 @@
 		<cfset var raw = '' />
 		<cfset var results = '' />
 		
+		<cfif right(arguments.archivePath, 1) neq '/'>
+			<cfset arguments.archivePath &= '/' />
+		</cfif>
+		
 		<!--- Retrieve the version file information --->
-		<cfdirectory action="list" directory="#determineProtocol(arguments.archiveFile)##arguments.archivePath#/#arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
+		<cfdirectory action="list" directory="#determineProtocol(arguments.archiveFile)##arguments.archivePath##arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
 		
 		<cfif not results.recordCount>
 			<cfset fileDelete(arguments.archivePath & '/' & arguments.archiveFile) />
@@ -280,6 +277,9 @@
 		<cfset archiveInfo['archiveRoot'] = results.directory & '/' />
 		<cfset archiveInfo['archivePath'] = arguments.archivePath />
 		<cfset archiveInfo['archiveFile'] = arguments.archiveFile />
+		
+		<!--- TODO Remove when no longer has the !// --->
+		<cfset archiveInfo['archiveRoot'] = replace(archiveInfo['archiveRoot'], '!//', '!/') />
 		
 		<cfreturn archiveInfo />
 	</cffunction>
