@@ -172,7 +172,7 @@
 		
 		<cfset local.observer.beforeGetPluginSettings(variables.transport, arguments.plugin) />
 		
-		<cfset local.settings = fileRead('/plugins/#arguments.plugin#/config/settings.json.cfm') />
+		<cfset local.settings = fileRead('/plugins/#arguments.plugin.getPlugin()#/config/settings.json.cfm') />
 		
 		<cfset local.observer.afterGetPluginSettings(variables.transport, arguments.plugin) />
 		

@@ -128,49 +128,45 @@
 		<cfargument name="info" type="struct" required="true" />
 		<cfargument name="isPlugin" type="boolean" default="true" />
 		
-		<cfset var baseLen = '' />
-		<cfset var basePath = '' />
-		<cfset var filePath = '' />
-		<cfset var fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
-		<cfset var results = '' />
+		<cfset local.fileStamp = dateFormat(now(), 'yyyy-mm-dd') & '-' & timeformat(now(), 'HH:mm:ss') />
 		
-		<cfset basePath = (arguments.isPlugin ? '/plugins/' : '/') & arguments.info.key />
+		<cfset local.basePath = (arguments.isPlugin ? '/plugins/' : '/') & arguments.info.key />
 		
-		<!--- Retrieve the version file information --->
-		<cfdirectory action="list" directory="#arguments.info.archiveRoot##arguments.info.key#" name="results" recurse="true" type="file" />
+		<cfset local.sourceBase = arguments.info.archiveRoot & arguments.info.key />
+		<cfset local.sourceBaseLen = len(local.sourceBase) />
 		
-		<cfif not results.recordCount>
+		<!--- Retrieve the list of files --->
+		<cfdirectory action="list" directory="#local.sourceBase#" name="local.results" recurse="true" type="file" />
+		
+		<cfif not local.results.recordCount>
 			<cfthrow type="validation" message="Archive did not contain files" detail="The archive file for `#arguments.info.key#` did not contain any files" />
 		</cfif>
 		
 		<!--- Backup the existing release --->
-		<cfif directoryExists(basePath)>
+		<cfif directoryExists(local.basePath)>
 			<cfset directoryRename(
-				basePath,
-				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups/' & arguments.info.key & '-' & fileStamp
+				local.basePath,
+				variables.transport.theApplication.managers.plugin.getPlugins().getStoragePath() & '/backups/' & arguments.info.key & '-' & local.fileStamp
 			) />
 		</cfif>
 		
-		<!--- Copy archive files --->
-		<cfset baseLen = len(arguments.info.archiveRoot & arguments.info.key) />
-		
-		<cfif not directoryExists(basePath)>
-			<cfset directoryCreate(basePath) />
+		<cfif not directoryExists(local.basePath)>
+			<cfset directoryCreate(local.basePath) />
 		</cfif>
 		
-		<!--- Copy all the files from the archive into the plugins directory --->
-		<cfloop query="results">
-			<cfset filePath = basePath />
+		<!--- Copy all the files from the archive into the application --->
+		<cfloop query="local.results">
+			<cfset local.filePath = local.basePath />
 			
-			<cfif len(results.directory) gt baseLen>
-				<cfset filePath &= '/' & right(results.directory, len(results.directory) - baseLen) />
+			<cfif len(local.results.directory) gt local.sourceBaseLen>
+				<cfset local.filePath &= right(local.results.directory, len(local.results.directory) - local.sourceBaseLen) />
 			</cfif>
 			
-			<cfif not directoryExists(filePath)>
-				<cfset directoryCreate(filePath) />
+			<cfif not directoryExists(local.filePath)>
+				<cfset directoryCreate(local.filePath) />
 			</cfif>
 			
-			<cfset fileCopy(results.directory & '/' & results.name, filePath & '/' & results.name) />
+			<cfset fileCopy(local.results.directory & '/' & local.results.name, local.filePath & '/' & local.results.name) />
 		</cfloop>
 	</cffunction>
 	
@@ -253,8 +249,12 @@
 		<cfset var raw = '' />
 		<cfset var results = '' />
 		
+		<cfif right(arguments.archivePath, 1) neq '/'>
+			<cfset arguments.archivePath &= '/' />
+		</cfif>
+		
 		<!--- Retrieve the version file information --->
-		<cfdirectory action="list" directory="#determineProtocol(arguments.archiveFile)##arguments.archivePath#/#arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
+		<cfdirectory action="list" directory="#determineProtocol(arguments.archiveFile)##arguments.archivePath##arguments.archiveFile#" name="results" recurse="true" filter="version.json" />
 		
 		<cfif not results.recordCount>
 			<cfset fileDelete(arguments.archivePath & '/' & arguments.archiveFile) />
@@ -277,6 +277,9 @@
 		<cfset archiveInfo['archiveRoot'] = results.directory & '/' />
 		<cfset archiveInfo['archivePath'] = arguments.archivePath />
 		<cfset archiveInfo['archiveFile'] = arguments.archiveFile />
+		
+		<!--- TODO Remove when no longer has the !// --->
+		<cfset archiveInfo['archiveRoot'] = replace(archiveInfo['archiveRoot'], '!//', '!/') />
 		
 		<cfreturn archiveInfo />
 	</cffunction>

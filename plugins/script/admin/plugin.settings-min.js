@@ -1,1 +1,1 @@
-(function(a){a(function(){JSON.stringify&&a(".form .element.settings textarea").change(function(){var c=a(this),b=a.trim(c.val());b.length||(b="{}");try{c.val(JSON.stringify(JSON.parse(b),null,"\t"))}catch(d){window.console&&window.console.error(d)}}).change()})})(jQuery);
+require(["jquery"],function(b){(function(a){a(function(){JSON.stringify&&a(".form .element.settings textarea").change(function(){var d=a(this),c=a.trim(d.val());c.length||(c="{}");try{d.val(JSON.stringify(JSON.parse(c),null,"\t"))}catch(b){window.console&&window.console.error(b)}}).change()})})(b)});
