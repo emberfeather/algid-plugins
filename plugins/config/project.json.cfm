@@ -26,7 +26,7 @@
 	"sources": [
 		{
 			"name": "one20 Directory",
-			"sourceURL": "https://github.com/emberfeather/one20-directory/raw/master/directory.json"
+			"sourceURL": "https://raw.github.com/emberfeather/one20-directory/master/directory.json"
 		}
 	],
 	"version": "0.1.6"
